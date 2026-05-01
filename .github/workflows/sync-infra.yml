@@ -1,35 +1,42 @@
-name: Sync Infrastructure to VPS
+name: Sync Infrastructure
 on:
   push:
-    branches: [ main, master ] # Trigger on either name
+    branches: [ main, master ]
 
 jobs:
-  deploy-infra:
+  deploy:
     runs-on: ubuntu-latest
-    # This prevents the action from running on forks of your public repo
-    if: github.repository == 'your-org-name/infra-orchestrator' 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Sync Config Files
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.GLOBAL_VPS_IP }}
-          username: root
-          key: ${{ secrets.GLOBAL_SSH_KEY }}
-          source: "docker-compose.yml,nginx/conf.d/*"
-          target: "/root/orchestrator"
-
-      - name: Execute Remote Commands
+      - uses: actions/checkout@v4
+      - name: Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
           key: ${{ secrets.GLOBAL_SSH_KEY }}
           script: |
-            cd /root/orchestrator
-            mkdir -p www/main-site
+            mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www/main-site
+            # Create the 200 OK test file
+            echo "<h1>Orchestration Active: 200 OK</h1>" > ~/orchestrator/www/main-site/index.html
+            
+      - name: Sync Files
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP }}
+          username: root
+          key: ${{ secrets.GLOBAL_SSH_KEY }}
+          source: "docker-compose.yml,nginx/conf.d/*"
+          target: "~/orchestrator"
+
+      - name: Boot Engine
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP }}
+          username: root
+          key: ${{ secrets.GLOBAL_SSH_KEY }}
+          script: |
+            cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
-            docker-compose up -d --remove-orphans
+            docker-compose up -d --force-recreate
+            sleep 3
             docker exec global_nginx nginx -s reload
