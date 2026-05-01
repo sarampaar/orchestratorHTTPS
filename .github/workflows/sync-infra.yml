@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy
+
+      - name: Prep VPS Directories
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
@@ -16,10 +17,9 @@ jobs:
           key: ${{ secrets.GLOBAL_SSH_KEY }}
           script: |
             mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www/main-site
-            # Create the 200 OK test file
             echo "<h1>Orchestration Active: 200 OK</h1>" > ~/orchestrator/www/main-site/index.html
-            
-      - name: Sync Files
+
+      - name: Sync Configuration Files
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
@@ -38,5 +38,5 @@ jobs:
             cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
             docker-compose up -d --force-recreate
-            sleep 3
+            sleep 2
             docker exec global_nginx nginx -s reload
