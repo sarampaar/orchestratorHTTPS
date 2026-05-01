@@ -1,0 +1,23 @@
+services:
+  # The Secure Bridge (Zero Trust)
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    environment:
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+    command: tunnel run
+
+  # The Router (Entry Point for all your Websites/Apps)
+  global_nginx:
+    image: nginx:alpine
+    container_name: global_nginx
+    restart: always
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./www:/var/www:ro
+    networks:
+      - factory-net
+
+networks:
+  factory-net:
+    driver: bridge
