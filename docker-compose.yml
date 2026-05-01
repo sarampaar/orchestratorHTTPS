@@ -1,13 +1,13 @@
 services:
-  # The Secure Bridge (Zero Trust)
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: always
     environment:
       - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
     command: tunnel run
+    networks:
+      - factory_net  # They must be in the same network
 
-  # The Router (Entry Point for all your Websites/Apps)
   global_nginx:
     image: nginx:alpine
     container_name: global_nginx
@@ -16,8 +16,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./www:/var/www:ro
     networks:
-      - factory-net
+      - factory_net
 
 networks:
-  factory-net:
+  factory_net:
     driver: bridge
