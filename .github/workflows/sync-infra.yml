@@ -38,5 +38,15 @@ jobs:
             cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
             docker-compose up -d --force-recreate
-            sleep 2
+            sleep 5
+            echo "--- Tunnel container status ---"
+            docker ps --filter "name=tunnel" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            if [ "$(docker ps --filter "name=tunnel" --format '{{.Names}}')" != "tunnel" ]; then
+              echo "ERROR: Tunnel container is not running or was not created."
+              docker ps -a --filter "name=tunnel"
+              docker logs tunnel --tail 20 || true
+              exit 1
+            fi
+            echo "--- Tunnel logs ---"
+            docker logs tunnel --tail 20
             docker exec global_nginx nginx -s reload
