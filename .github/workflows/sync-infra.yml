@@ -27,7 +27,7 @@ jobs:
       - name: Save SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.GLOBAL_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
+          echo -e "${{ secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
         shell: bash
 
