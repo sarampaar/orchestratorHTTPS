@@ -27,9 +27,8 @@ jobs:
       - name: Save SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.GLOBAL_SSH_KEY }}" | sed 's/\r$//' > ~/.ssh/id_rsa
+          printf '%s' "${{ secrets.GLOBAL_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keygen -lf ~/.ssh/id_rsa > /dev/null
         shell: bash
 
       - name: Verify SSH connectivity
