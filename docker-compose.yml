@@ -1,5 +1,7 @@
 services:
+  # This IS the tunnel. Name it exactly "tunnel" for the script to work.
   tunnel:
+    container_name: tunnel
     image: cloudflare/cloudflared:latest
     restart: always
     environment:
@@ -8,9 +10,10 @@ services:
     networks:
       - orchestration_net
 
+  # This is the Router for all your Apps, Ebooks, and Websites.
   global_nginx:
-    image: nginx:alpine
     container_name: global_nginx
+    image: nginx:alpine
     restart: always
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
