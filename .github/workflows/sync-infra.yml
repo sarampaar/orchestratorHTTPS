@@ -34,7 +34,7 @@ jobs:
       - name: Verify SSH connectivity
         run: |
           chmod 600 ~/.ssh/id_rsa
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${{ secrets.GLOBAL_VPS_IP }} 'echo SSH OK'
+          ssh -i ~/.ssh/id_rsa -p 2256 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${{ secrets.GLOBAL_VPS_IP }} 'echo SSH OK'
         shell: bash
 
       - name: Prep VPS Directories
@@ -43,6 +43,7 @@ jobs:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
           key_path: ~/.ssh/id_rsa
+          port: 2256
           script: |
             mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www/main-site
             echo "<h1>Orchestration Active: 200 OK</h1>" > ~/orchestrator/www/main-site/index.html
@@ -53,6 +54,7 @@ jobs:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
           key_path: ~/.ssh/id_rsa
+          port: 2256
           source: "docker-compose.yml,nginx/conf.d/*"
           target: "~/orchestrator"
 
@@ -62,6 +64,7 @@ jobs:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
           key_path: ~/.ssh/id_rsa
+          port: 2256
           script: |
             cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
