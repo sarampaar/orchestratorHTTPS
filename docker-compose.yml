@@ -6,7 +6,7 @@ services:
       - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
     command: tunnel run
     networks:
-      - factory_net  # They must be in the same network
+      - orchestration_net
 
   global_nginx:
     image: nginx:alpine
@@ -16,8 +16,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./www:/var/www:ro
     networks:
-      - factory_net
+      - orchestration_net
 
 networks:
-  factory_net:
+  orchestration_net:
     driver: bridge
