@@ -113,3 +113,25 @@ Navigate to the **Actions** tab in this repository and run the **Sync Infrastruc
 - Securely connects to the VPS.
 - Copies the `docker-compose.yml`, `nginx/conf.d/` routing rules, and the entire `www/` website directory to the VPS.
 - Boots or updates the Docker containers (`global_nginx` and `tunnel`).
+
+---
+
+## ⚡ Step 7: Node.js + Prisma SSG Pipeline
+This architecture includes a built-in **Static Site Generator (SSG)** workflow for database-driven websites.
+Because your PostgreSQL database is securely hidden inside the VPS, GitHub Actions cannot connect to it directly. Instead, when you deploy:
+1. The GitHub Action copies your SSG source code (in `ssg-builder/`) to your VPS.
+2. The Action spins up a temporary **Node.js 18 Docker Container** right on your VPS.
+3. This container securely connects to the database locally, executes Prisma to fetch data, generates the static HTML files, and outputs them directly to your `www/` directory.
+4. The temporary container deletes itself, leaving Nginx to serve the site incredibly fast.
+
+---
+
+## 📊 Step 8: Database Administration (Adminer)
+You can visually manage your PostgreSQL data using the built-in **Adminer** service. This is completely hidden from the public internet for maximum security.
+
+**How to access your Admin Panel:**
+1. Go to your **Cloudflare Tunnel** settings.
+2. Add a new Public Hostname route (e.g., `admin.example.com`).
+3. Set the Service Type to `HTTP` and the URL to `db_admin:8080`.
+4. Visit `admin.example.com` in your browser.
+5. Log in using the `POSTGRES_USER` and `POSTGRES_PASSWORD` you configured in your GitHub Secrets. The server name is automatically set to `global_postgres`.

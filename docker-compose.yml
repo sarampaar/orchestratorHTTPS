@@ -32,6 +32,15 @@ services:
     networks:
       - factory_net
 
+  db_admin:
+    container_name: db_admin
+    image: adminer
+    restart: always
+    environment:
+      - ADMINER_DEFAULT_SERVER=global_postgres
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge
