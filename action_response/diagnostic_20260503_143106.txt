@@ -1,0 +1,115 @@
+Warning: Permanently added '[194.163.174.180]:2256' (ED25519) to the list of known hosts.
+Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.8.0-106-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Sun May  3 16:31:07 CEST 2026
+
+  System load:           0.43
+  Usage of /:            16.2% of 95.82GB
+  Memory usage:          21%
+  Swap usage:            0%
+  Processes:             160
+  Users logged in:       1
+  IPv4 address for eth0: 194.163.174.180
+  IPv6 address for eth0: 2a02:c207:2308:6040::1
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+24 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+  _____
+ / ___/___  _  _ _____ _   ___  ___
+| |   / _ \| \| |_   _/ \ | _ )/ _ \
+| |__| (_) | .` | | |/ _ \| _ \ (_) |
+ \____\___/|_|\_| |_/_/ \_|___/\___/
+
+Welcome!
+
+This server is hosted by Contabo. If you have any questions or need help,
+please raise a support ticket from your customer control panel.
+=== VPS Connection Check ===
+Connected successfully!
+Linux vmi3086040 6.8.0-106-generic #106-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar  6 07:58:08 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+ 16:31:09 up 23 days, 22:22,  2 users,  load average: 0.43, 0.15, 0.05
+
+=== Docker Checks ===
+--- Docker Info ---
+ Containers: 4
+ Images: 7
+ Server Version: 29.4.0
+ Kernel Version: 6.8.0-106-generic
+ Operating System: Ubuntu 24.04.4 LTS
+--- Docker Containers ---
+CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS                   PORTS                                         NAMES
+523a2c8ba0d5   cloudflare/cloudflared:latest   "cloudflared --no-au…"   12 days ago   Up 12 days                                                             domainchecker-tunnel
+82dbabe6980d   domainch-n8n:latest             "/sbin/tini -- n8n"      12 days ago   Up 12 days               0.0.0.0:5679->5678/tcp, [::]:5679->5678/tcp   n8n-checker
+6f8d5de0b7bc   postgres:16-alpine              "docker-entrypoint.s…"   2 weeks ago   Up 2 weeks (healthy)     0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp   domainchecker-postgres
+c1641d01cdb8   python:3.9-slim                 "python /scripts/gen…"   3 weeks ago   Exited (1) 3 weeks ago                                                 domain-generator
+
+=== Cloudflare Checks ===
+cloudflared version 2026.3.0 (built 2026-03-09-14:08 UTC)
+--- Cloudflared Service Status ---
+● cloudflared.service - cloudflared
+     Loaded: loaded (/etc/systemd/system/cloudflared.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2026-04-09 19:53:55 CEST; 3 weeks 2 days ago
+   Main PID: 14283 (cloudflared)
+      Tasks: 12 (limit: 14307)
+     Memory: 17.4M (peak: 22.9M)
+        CPU: 2h 29min 13.167s
+     CGroup: /system.slice/cloudflared.service
+             └─14283 /usr/bin/cloudflared --no-autoupdate tunnel run --token eyJhIjoiODMyOThkMGUzZmJjNjlkYTgxM2YyMzYwZWMyMjRkZDgiLCJ0IjoiMGRjOTUxOWMtODFhNi00NmMxLTgxMGUtNzNjMzcyNTY1NzNiIiwicyI6Ik9EQmhZbU5pTW1JdE1UUmlOQzAwWVdVNExXSmhPV1F0TlRCbU9EZzFNVFF5TjJZeCJ9
+
+Apr 30 11:30:29 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:29Z WRN Failed to dial a quic connection error="failed to dial to edge with quic: timeout: no recent network activity" connIndex=0 event=0 ip=198.41.192.57
+Apr 30 11:30:29 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:29Z INF Retrying connection in up to 4s connIndex=0 event=0 ip=198.41.192.57
+Apr 30 11:30:32 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:32Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.27
+Apr 30 11:30:32 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:32Z INF Registered tunnel connection connIndex=0 connection=ca0b45a0-5935-4ee4-9557-a67df3ce8b0d event=0 ip=198.41.192.27 location=cdg08 protocol=quic
+Apr 30 11:30:32 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:32Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=1 event=0 ip=198.41.200.73
+Apr 30 11:30:37 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:37Z WRN Failed to dial a quic connection error="failed to dial to edge with quic: timeout: no recent network activity" connIndex=1 event=0 ip=198.41.200.73
+Apr 30 11:30:37 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:37Z INF Retrying connection in up to 4s connIndex=1 event=0 ip=198.41.200.73
+Apr 30 11:30:40 vmi3086040 cloudflared[14283]: 2026-04-30T09:30:40Z WRN Connection terminated error="failed to dial to edge with quic: timeout: no recent network activity" connIndex=1
+Apr 30 11:31:20 vmi3086040 cloudflared[14283]: 2026-04-30T09:31:20Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=1 event=0 ip=198.41.200.43
+Apr 30 11:31:20 vmi3086040 cloudflared[14283]: 2026-04-30T09:31:20Z INF Registered tunnel connection connIndex=1 connection=cde7e976-8e56-43ab-83af-9cf8865d045b event=0 ip=198.41.200.43 location=fra18 protocol=quic
+--- Cloudflare Docker Tunnel ---
+CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS       PORTS     NAMES
+523a2c8ba0d5   cloudflare/cloudflared:latest   "cloudflared --no-au…"   12 days ago   Up 12 days             domainchecker-tunnel
+
+=== Open Ports / Firewall Checks ===
+--- Listening Ports ---
+Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess
+udp   UNCONN 0      0         127.0.0.54:53         0.0.0.0:*          
+udp   UNCONN 0      0      127.0.0.53%lo:53         0.0.0.0:*          
+udp   UNCONN 0      0                  *:46431            *:*          
+udp   UNCONN 0      0                  *:39009            *:*          
+udp   UNCONN 0      0                  *:39359            *:*          
+udp   UNCONN 0      0                  *:53292            *:*          
+tcp   LISTEN 0      4096       127.0.0.1:20241      0.0.0.0:*          
+tcp   LISTEN 0      4096   127.0.0.53%lo:53         0.0.0.0:*          
+tcp   LISTEN 0      4096         0.0.0.0:5432       0.0.0.0:*          
+tcp   LISTEN 0      4096         0.0.0.0:5679       0.0.0.0:*          
+tcp   LISTEN 0      4096         0.0.0.0:2256       0.0.0.0:*          
+tcp   LISTEN 0      4096      127.0.0.54:53         0.0.0.0:*          
+tcp   LISTEN 0      4096            [::]:5432          [::]:*          
+tcp   LISTEN 0      4096            [::]:5679          [::]:*          
+tcp   LISTEN 0      4096            [::]:2256          [::]:*          
+--- UFW Status ---
+Status: active
+
+To                         Action      From
+--                         ------      ----
+2256/tcp                   ALLOW       Anywhere                  
+2256/tcp (v6)              ALLOW       Anywhere (v6)             
+
