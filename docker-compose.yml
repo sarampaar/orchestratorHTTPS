@@ -19,6 +19,19 @@ services:
     networks:
       - factory_net
 
+  global_postgres:
+    container_name: global_postgres
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword123}
+      - POSTGRES_DB=orchestrator_db
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge

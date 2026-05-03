@@ -1,51 +1,115 @@
-# orchestratorHTTPS
-HTTP/HTTPS Layer
-Output - Getting 200 response from domain
-Existing- Godady domains, VPS linux headless 24.04 LTS 12gb ram 250gb ssd Hosting, in VPS Cloudflare and docker installed, Cloudflare free Plan Domain and ZeroTrust, Github organization Level GLOBAL_VPS_IP, GLOBAL_VPS_SSH_KEY, CF_TUNNEL_TOKEN
-Process - Manual- sequence important - cloudflare add domain names get NAME SERVER, goto godaddy update name server, go to cloudflare check status pending, once active goto zero trust -> access -> tunnels ->   click create tunnel (which is on top right corner) -> create tunnel -> select linux(debian), OPTIONAL IF VPS HAS cloudflared installed (copy command from cloudflare and paste in server, for ubuntu 22.04 LTS:  curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb | sudo dpkg -i -)), after cloudflared installed/running on VPS , Copy only CONNECTOR TOKEN from cloudflare tunnel setup. 
-goto VPS create ssh key (if not exists) by running the following commands in the terminal:
+# Orchestrator HTTPS Layer
 
+## Overview
+This repository serves as the **single source of truth** for all web applications hosted on the VPS. It automates the deployment of a highly scalable, dynamic Nginx architecture securely connected via Cloudflare Tunnels. 
+
+The primary goal is to achieve a secure `200 OK` HTTP/HTTPS response for infinite domains with near-zero downtime, seamlessly integrating GoDaddy domains, Cloudflare security, and GitHub Actions.
+
+---
+
+## 🏗️ Architecture Pipeline
+
+The traffic flow and management pipeline follows this structure:
+
+1. **GoDaddy**: Domain registration and nameserver delegation.
+2. **Cloudflare**: DNS management, SSL/HTTPS termination, and Zero Trust Tunnels.
+3. **GitHub Actions**: Single source of truth for infrastructure configuration, Nginx routing, and website HTML content.
+4. **VPS (Ubuntu 24.04 LTS)**: Hosts the Dockerized Nginx server and Cloudflared Tunnel daemon.
+
+---
+
+## 🔑 Step 1: VPS SSH Key Generation & Authorization
+
+Before doing anything else, you must create and authorize an SSH key on your new VPS so GitHub Actions can securely connect to it. Run these commands on your VPS terminal:
+
+*** NOTE:/ id_github_actions is folder name acutal used is id_rsa_org ***
 ```bash
-# 1. Ensure the .ssh folder exists
-mkdir -p ~/.ssh
-
-# 2. Add your existing public key to authorized_keys so GitHub can log in
-cat ~/id_rsa_org.pub >> ~/.ssh/authorized_keys
-
-# 3. Secure the folder and the authorized_keys file
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys
-
-# 4. Display the private key so you can copy it
-cat ~/id_rsa_org
-```
-
-```bash
-# 1. Generate a new SSH key (leave passphrase empty)
+# 1. Generate an SSH Key (leave the passphrase empty)
 ssh-keygen -t ed25519 -f ~/.ssh/id_github_actions -N ""
 
-# 2. Add the public key to authorized_keys to allow login
+# 2. Authorize the Key by appending it to authorized_keys
 cat ~/.ssh/id_github_actions.pub >> ~/.ssh/authorized_keys
 
-# 3. Set the correct permissions for SSH to work
+# 3. Set Strict Permissions for security
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
 
-# 4. Display the private key so you can copy it
+# 4. Retrieve Private Key
 cat ~/.ssh/id_github_actions
 ```
+*Securely copy the entire output block (including the `BEGIN` and `END` headers) to save for the next step.*
 
-**IMPORTANT**: When copying the private key output from the terminal, ensure you copy the **entire block**, including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines. Paste it exactly as is into your GitHub Secrets to preserve the line breaks.
+---
 
-After getting the SSHKEY and CF TOKEN, PASTE them into your GitHub organization secrets (`GLOBAL_VPS_SSH_KEY`, `CF_TUNNEL_TOKEN`).
-Now this task could be done using ansible script.
-Task a) This codes runs on github actionsfirst check on manual click -VPS Connection, Cloudflare, Docker checks, CHECK VPS Which port are allowed
-connect via git secrets GLOBAL_VPS_PORT, GLOBAL_VPS_IP, GLOBAL_VPS_SSH_KEY, CF_TUNNEL_TOKEN
- 
-create a folder in repo name as action response , whenever a action runs it will save response in this folder.
-**Task b) Scalable Nginx Routing & Single Source of Truth**
-This repository serves as the single source of truth for all web applications hosted on the VPS. 
-- **Nginx Dynamic Routing**: The Nginx configuration (`nginx/conf.d/default.conf`) is configured to dynamically route incoming Cloudflare Tunnel traffic to the corresponding folder in `/var/www/`. There is no need to write a new `.conf` file for every domain.
-- **Adding a New Domain or Subdomain**: To add a new domain (e.g., `example.com`) or a subdomain (e.g., `app.example.com`), simply create a folder in this repository named exactly matching the hostname (e.g. `www/example.com/` or `www/app.example.com/`) and place your HTML files inside it. The dynamic `$host` variable handles subdomains automatically!
-- **Fallback**: If a domain is routed via Cloudflare but does not have a matching folder in `www/`, Nginx will serve the generic 200 OK welcome page from `www/default/`.
-- **Deployment**: After adding/updating files in the `www/` directory, trigger the **Sync Infrastructure** GitHub Action to automatically deploy the changes to your VPS with near-zero downtime.
+## 🔐 Step 2: Initial GitHub Secrets Configuration
+
+Now that your SSH key is authorized, define the following **Organization Level Secrets** in GitHub so your Actions can securely log into your VPS:
+
+- `GLOBAL_VPS_IP`: The public IP address of your VPS.
+- `GLOBAL_VPS_PORT`: The SSH port for your VPS (defaults to `2256` if not set).
+- `GLOBAL_VPS_SSH_KEY` (or `GLOBAL_SSH_KEY`): Paste the SSH Private Key output you copied from Step 1 here.
+
+---
+
+## 🛠️ Step 3: VPS Diagnostics & Health Checklist
+
+With the SSH keys in place, you can now run your first GitHub Action to verify your VPS is healthy.
+- Navigate to the **Actions** tab in GitHub.
+- Run the **VPS Diagnostics** (`vps-diagnostics.yml`) workflow.
+- Review the output report saved in the `action_response/` folder against this checklist:
+
+### Diagnostic Verification Checklist:
+- [ ] **Docker Engine**: Verify Docker is installed, running, and returning system info.
+- [ ] **PostgreSQL Database**: Check that the `global_postgres` container is running without restart loops.
+- [ ] **Cloudflared Service**: Confirm the `cloudflared` CLI is installed and the background service is active.
+- [ ] **Container Conflicts**: Ensure there are no old, conflicting tunnel or nginx containers running.
+- [ ] **Network & Ports**: Check the `ss`/`netstat` output to ensure the VPS is listening on your designated SSH port.
+- [ ] **Firewall (UFW)**: Verify your firewall status is active and properly configured to allow necessary SSH traffic.
+
+---
+
+## 🚀 Step 4: Domain & Tunnel Setup (Manual)
+
+Now we connect the networking layer to your VPS. Follow these sequential steps:
+
+1. **Cloudflare DNS**: Add your new domain to Cloudflare to get your assigned Cloudflare Nameservers.
+2. **GoDaddy**: Update the domain's nameservers in GoDaddy to point to the Cloudflare Nameservers. Wait for the domain status to become "Active" in Cloudflare.
+3. **Cloudflare Zero Trust**:
+   - Go to **Zero Trust** -> **Access** -> **Tunnels**.
+   - Create a new Tunnel (Select Debian/Linux environment).
+   - *If cloudflared is not installed on the VPS*, run the provided installation command on your VPS.
+   - Copy **only** the `CONNECTOR TOKEN`.
+4. **Final Secret**: Add the Connector Token to your GitHub Secrets as `CF_TUNNEL_TOKEN`.
+5. **Public Hostname Routing**:
+   - In your Cloudflare Tunnel settings, add a Public Hostname for your domain (e.g., `example.com` or `app.example.com`).
+   - Set the Service Type to `HTTP` and the URL to `global_nginx:80`.
+
+---
+
+## 🌐 Step 5: Adding Websites & Content (Single Source of Truth)
+
+This repository utilizes a **Dynamic Nginx Routing** configuration (`nginx/conf.d/default.conf`). Nginx dynamically routes incoming traffic to a specific folder in `/var/www/` based on the exact HTTP Host Header requested. 
+
+**There is no need to write a new Nginx `.conf` file for every domain!**
+
+### How to add a new Domain or Subdomain:
+1. Create a new folder inside the `www/` directory of this repository that **exactly matches** the hostname.
+   - Example for a domain: `www/example.com/`
+   - Example for a subdomain: `www/app.example.com/`
+2. Place your `index.html` and other static assets inside that folder.
+3. Commit and push your changes to GitHub.
+
+### Fallback Behavior:
+If a domain is routed via Cloudflare but does not have a matching folder in `www/`, Nginx will automatically serve the generic welcome page from the `www/default/` directory.
+
+---
+
+## ⚙️ Step 6: Deployment & Sync
+
+All updates are deployed securely and automatically via GitHub Actions. 
+
+Navigate to the **Actions** tab in this repository and run the **Sync Infrastructure** (`sync-infra.yml`) workflow.
+**Run this whenever you add new domains, update HTML files, or change Nginx configurations.**
+- Securely connects to the VPS.
+- Copies the `docker-compose.yml`, `nginx/conf.d/` routing rules, and the entire `www/` website directory to the VPS.
+- Boots or updates the Docker containers (`global_nginx` and `tunnel`).

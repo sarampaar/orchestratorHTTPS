@@ -53,7 +53,7 @@ jobs:
           username: root
           key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
           port: 2256
-          source: "docker-compose.yml,nginx/conf.d/*,www"
+          source: "docker-compose.yml,nginx/conf.d/*,www,ssg-builder"
           target: "~/orchestrator"
 
       - name: Boot Engine
@@ -66,6 +66,8 @@ jobs:
           script: |
             cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
+            export POSTGRES_USER=${{ secrets.POSTGRES_USER || 'admin' }}
+            export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'securepassword123' }}
             docker compose up -d --force-recreate
             sleep 5
             echo "--- Tunnel container status ---"
@@ -79,3 +81,14 @@ jobs:
             echo "--- Tunnel logs ---"
             docker logs tunnel --tail 20
             docker exec global_nginx nginx -s reload
+            
+            echo "--- Generating Static Sites via Node SSG ---"
+            export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@global_postgres:5432/orchestrator_db"
+            docker run --rm \
+              --network orchestrator_factory_net \
+              -v ~/orchestrator/ssg-builder:/app \
+              -v ~/orchestrator/www:/www \
+              -w /app \
+              -e DATABASE_URL=${DATABASE_URL} \
+              node:18-alpine \
+              sh -c "npm install && npx prisma generate && npx prisma db push --accept-data-loss && node seed.js && node build.js"

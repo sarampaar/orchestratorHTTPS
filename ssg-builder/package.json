@@ -1,0 +1,16 @@
+{
+  "name": "ssg-builder",
+  "version": "1.0.0",
+  "description": "Static site generator fetching from PostgreSQL",
+  "main": "build.js",
+  "type": "module",
+  "scripts": {
+    "start": "node build.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.12.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.12.0"
+  }
+}

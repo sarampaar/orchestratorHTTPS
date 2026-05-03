@@ -61,7 +61,7 @@ jobs:
             echo "--- Docker Info ---"
             docker info | grep -E "Server Version|Containers|Images|Operating System|Kernel Version" || true
             echo "--- Docker Containers ---"
-            docker ps -a || true
+            docker ps -a --filter "name=tunnel" --filter "name=global_nginx" --filter "name=global_postgres" || true
           else
             echo "Docker is not installed or not in PATH"
           fi
