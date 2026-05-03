@@ -1,0 +1,81 @@
+name: VPS Diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Run Diagnostics on VPS
+        run: |
+          # Create the folder required by Task a)
+          mkdir -p action_response
+          
+          PORT="${{ secrets.GLOBAL_VPS_PORT || '2256' }}"
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          REPORT_FILE="action_response/diagnostic_${TIMESTAMP}.txt"
+          
+          echo "Starting diagnostics run..."
+          
+          # Execute the script on the VPS via SSH and save output to REPORT_FILE
+          ssh -i ~/.ssh/id_rsa -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${{ secrets.GLOBAL_VPS_IP }} << 'EOF' > $REPORT_FILE 2>&1
+          echo "=== VPS Connection Check ==="
+          echo "Connected successfully!"
+          uname -a
+          uptime
+          
+          echo -e "\n=== Docker Checks ==="
+          if command -v docker >/dev/null 2>&1; then
+            echo "--- Docker Info ---"
+            docker info | grep -E "Server Version|Containers|Images|Operating System|Kernel Version" || true
+            echo "--- Docker Containers ---"
+            docker ps -a
+          else
+            echo "Docker is not installed or not in PATH"
+          fi
+          
+          echo -e "\n=== Cloudflare Checks ==="
+          if command -v cloudflared >/dev/null 2>&1; then
+            cloudflared version
+          else
+            echo "cloudflared CLI command not found"
+          fi
+          echo "--- Cloudflared Service Status ---"
+          systemctl status cloudflared --no-pager || echo "Service not found or not running"
+          echo "--- Cloudflare Docker Tunnel ---"
+          docker ps -a --filter "name=tunnel"
+          
+          echo -e "\n=== Open Ports / Firewall Checks ==="
+          echo "--- Listening Ports ---"
+          ss -tuln || netstat -tuln || echo "ss and netstat not available"
+          
+          echo "--- UFW Status ---"
+          if command -v ufw >/dev/null 2>&1; then
+            ufw status
+          else
+            echo "UFW not installed"
+          fi
+          EOF
+          
+          echo "Diagnostics completed and saved to $REPORT_FILE"
+
+      - name: Commit and Push Report
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add action_response/
+          git commit -m "docs(actions): save VPS diagnostics report" || echo "No changes to commit"
+          git push
