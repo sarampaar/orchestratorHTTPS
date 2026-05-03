@@ -134,4 +134,9 @@ You can visually manage your PostgreSQL data using the built-in **Adminer** serv
 2. Add a new Public Hostname route (e.g., `admin.example.com`).
 3. Set the Service Type to `HTTP` and the URL to `db_admin:8080`.
 4. Visit `admin.example.com` in your browser.
-5. Log in using the `POSTGRES_USER` and `POSTGRES_PASSWORD` you configured in your GitHub Secrets. The server name is automatically set to `global_postgres`.
+5. Log in using the following details:
+   - **System**: PostgreSQL
+   - **Server**: `global_postgres`
+   - **Username**: The `POSTGRES_USER` from your secrets.
+   - **Password**: The `POSTGRES_PASSWORD` from your secrets.
+   - **Database**: `orchestrator_db`
