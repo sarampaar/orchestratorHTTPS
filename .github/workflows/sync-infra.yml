@@ -66,11 +66,11 @@ jobs:
           script: |
             cd ~/orchestrator
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
-            docker-compose up -d --force-recreate
+            docker compose up -d --force-recreate
             sleep 5
             echo "--- Tunnel container status ---"
-            docker ps --filter "name=tunnel" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-            if [ "$(docker ps --filter "name=tunnel" --format '{{.Names}}')" != "tunnel" ]; then
+            docker ps --filter "name=^tunnel$" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            if [ -z "$(docker ps -q --filter "name=^tunnel$")" ]; then
               echo "ERROR: Tunnel container is not running or was not created."
               docker ps -a --filter "name=tunnel"
               docker logs tunnel --tail 20 || true
