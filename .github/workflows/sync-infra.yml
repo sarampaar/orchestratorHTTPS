@@ -44,8 +44,7 @@ jobs:
           key_path: ~/.ssh/id_rsa
           port: 2256
           script: |
-            mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www/main-site
-            echo "<h1>Orchestration Active: 200 OK</h1>" > ~/orchestrator/www/main-site/index.html
+            mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www
 
       - name: Sync Configuration Files
         uses: appleboy/scp-action@master
@@ -54,7 +53,7 @@ jobs:
           username: root
           key_path: ~/.ssh/id_rsa
           port: 2256
-          source: "docker-compose.yml,nginx/conf.d/*"
+          source: "docker-compose.yml,nginx/conf.d/*,www"
           target: "~/orchestrator"
 
       - name: Boot Engine

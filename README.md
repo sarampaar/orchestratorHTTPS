@@ -43,3 +43,9 @@ Task a) This codes runs on github actionsfirst check on manual click -VPS Connec
 connect via git secrets GLOBAL_VPS_PORT, GLOBAL_VPS_IP, GLOBAL_VPS_SSH_KEY, CF_TUNNEL_TOKEN
  
 create a folder in repo name as action response , whenever a action runs it will save response in this folder.
+**Task b) Scalable Nginx Routing & Single Source of Truth**
+This repository serves as the single source of truth for all web applications hosted on the VPS. 
+- **Nginx Dynamic Routing**: The Nginx configuration (`nginx/conf.d/default.conf`) is configured to dynamically route incoming Cloudflare Tunnel traffic to the corresponding folder in `/var/www/`. There is no need to write a new `.conf` file for every domain.
+- **Adding a New Domain or Subdomain**: To add a new domain (e.g., `example.com`) or a subdomain (e.g., `app.example.com`), simply create a folder in this repository named exactly matching the hostname (e.g. `www/example.com/` or `www/app.example.com/`) and place your HTML files inside it. The dynamic `$host` variable handles subdomains automatically!
+- **Fallback**: If a domain is routed via Cloudflare but does not have a matching folder in `www/`, Nginx will serve the generic 200 OK welcome page from `www/default/`.
+- **Deployment**: After adding/updating files in the `www/` directory, trigger the **Sync Infrastructure** GitHub Action to automatically deploy the changes to your VPS with near-zero downtime.
