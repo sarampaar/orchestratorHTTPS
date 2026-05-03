@@ -41,7 +41,7 @@ jobs:
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
-          key_path: ~/.ssh/id_rsa
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
           port: 2256
           script: |
             mkdir -p ~/orchestrator/nginx/conf.d ~/orchestrator/www
@@ -51,7 +51,7 @@ jobs:
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
-          key_path: ~/.ssh/id_rsa
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
           port: 2256
           source: "docker-compose.yml,nginx/conf.d/*,www"
           target: "~/orchestrator"
@@ -61,7 +61,7 @@ jobs:
         with:
           host: ${{ secrets.GLOBAL_VPS_IP }}
           username: root
-          key_path: ~/.ssh/id_rsa
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
           port: 2256
           script: |
             cd ~/orchestrator
