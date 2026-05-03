@@ -16,7 +16,12 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          # Use GLOBAL_VPS_SSH_KEY if provided, fallback to GLOBAL_SSH_KEY
+          if [ -n "${{ secrets.GLOBAL_VPS_SSH_KEY }}" ]; then
+            echo -e "${{ secrets.GLOBAL_VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          else
+            echo -e "${{ secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          fi
           chmod 600 ~/.ssh/id_rsa
 
       - name: Run Diagnostics on VPS
@@ -28,10 +33,11 @@ jobs:
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
           REPORT_FILE="action_response/diagnostic_${TIMESTAMP}.txt"
           
-          echo "Starting diagnostics run..."
+          echo "Starting diagnostics run on IP: ${{ secrets.GLOBAL_VPS_IP }} Port: $PORT"
           
           # Execute the script on the VPS via SSH and save output to REPORT_FILE
-          ssh -i ~/.ssh/id_rsa -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${{ secrets.GLOBAL_VPS_IP }} << 'EOF' > $REPORT_FILE 2>&1
+          # We use -T to disable pseudo-terminal and || true so that the action doesn't crash on non-zero exit from SSH
+          ssh -T -i ~/.ssh/id_rsa -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${{ secrets.GLOBAL_VPS_IP }} << 'EOF' > $REPORT_FILE 2>&1 || echo "SSH command returned non-zero exit code" >> $REPORT_FILE
           echo "=== VPS Connection Check ==="
           echo "Connected successfully!"
           uname -a
@@ -42,21 +48,21 @@ jobs:
             echo "--- Docker Info ---"
             docker info | grep -E "Server Version|Containers|Images|Operating System|Kernel Version" || true
             echo "--- Docker Containers ---"
-            docker ps -a
+            docker ps -a || true
           else
             echo "Docker is not installed or not in PATH"
           fi
           
           echo -e "\n=== Cloudflare Checks ==="
           if command -v cloudflared >/dev/null 2>&1; then
-            cloudflared version
+            cloudflared version || true
           else
             echo "cloudflared CLI command not found"
           fi
           echo "--- Cloudflared Service Status ---"
           systemctl status cloudflared --no-pager || echo "Service not found or not running"
           echo "--- Cloudflare Docker Tunnel ---"
-          docker ps -a --filter "name=tunnel"
+          docker ps -a --filter "name=tunnel" || true
           
           echo -e "\n=== Open Ports / Firewall Checks ==="
           echo "--- Listening Ports ---"
@@ -64,12 +70,16 @@ jobs:
           
           echo "--- UFW Status ---"
           if command -v ufw >/dev/null 2>&1; then
-            ufw status
+            ufw status || true
           else
             echo "UFW not installed"
           fi
+          
+          # Ensure script exits with 0 so SSH doesn't propagate a false error
+          exit 0
           EOF
           
+          cat $REPORT_FILE
           echo "Diagnostics completed and saved to $REPORT_FILE"
 
       - name: Commit and Push Report
