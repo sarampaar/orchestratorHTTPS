@@ -90,5 +90,5 @@ jobs:
               -v ~/orchestrator/www:/www \
               -w /app \
               -e DATABASE_URL=${DATABASE_URL} \
-              node:18-alpine \
+              node:18 \
               sh -c "npm install && npx prisma generate && npx prisma db push --accept-data-loss && node seed.js && node build.js"
