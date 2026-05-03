@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to theengineer.in</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto Mono', monospace;
+            background: linear-gradient(135deg, #022c22 0%, #064e3b 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ecfdf5;
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(2, 44, 34, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 4rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #10b981;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: #34d399;
+            border-radius: 12px 12px 0 0;
+        }
+        .container:hover {
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.4);
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            color: #34d399;
+        }
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #a7f3d0;
+            margin: 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #065f46;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 4px;
+        }
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: #34d399;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="badge">System Initialization</div>
+        <h1>theengineer.in<span class="cursor"></span></h1>
+        <p>Building the foundations. Deployment in progress.</p>
+    </div>
+</body>
+</html>
