@@ -140,3 +140,23 @@ You can visually manage your PostgreSQL data using the built-in **Adminer** serv
    - **Username**: The `POSTGRES_USER` from your secrets.
    - **Password**: The `POSTGRES_PASSWORD` from your secrets.
    - **Database**: `orchestrator_db`
+
+---
+
+## 🚀 Step 9: Dynamic Applications (SSR / ISR / SPA)
+The Orchestrator isn't just for static sites! If you want to run a fully dynamic Node.js, Next.js, or Nuxt application, you can bypass Nginx completely.
+
+### The Architecture:
+Because we use Cloudflare Tunnels, Cloudflare acts as the ultimate reverse proxy.
+1. You place your app code inside the `apps/` directory (e.g., `apps/nextjs-demo`).
+2. You add a simple `Dockerfile` to that folder.
+3. You add it as a new service in your `docker-compose.yml`.
+4. When you deploy, the app spins up internally on the `factory_net` (e.g., port `3000`).
+
+### How to Route Traffic:
+Instead of dealing with Nginx `.conf` files, you just go to Cloudflare Zero Trust:
+1. Create a new Public Hostname (e.g., `dynamic.theengineer.co.in`).
+2. Set the Service Type to `HTTP` and the URL to `nextjs_demo:3000`.
+3. Cloudflare will securely tunnel traffic directly into your Next.js container!
+
+This brilliantly separates your ultra-fast Static Sites (handled automatically by Nginx) from your complex Dynamic Apps (handled directly by Cloudflare Tunnels).

@@ -41,6 +41,13 @@ services:
     networks:
       - factory_net
 
+  nextjs_demo:
+    container_name: nextjs_demo
+    build: ./apps/nextjs-demo
+    restart: always
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge
