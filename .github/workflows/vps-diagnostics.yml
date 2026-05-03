@@ -14,15 +14,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup SSH
+        env:
+          VPS_KEY: ${{ secrets.GLOBAL_VPS_SSH_KEY }}
+          GLOBAL_KEY: ${{ secrets.GLOBAL_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          # Use GLOBAL_VPS_SSH_KEY if provided, fallback to GLOBAL_SSH_KEY
-          if [ -n "${{ secrets.GLOBAL_VPS_SSH_KEY }}" ]; then
-            echo -e "${{ secrets.GLOBAL_VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Write the key using env variables to avoid parsing errors
+          if [ -n "$VPS_KEY" ]; then
+            echo "$VPS_KEY" > ~/.ssh/id_rsa
           else
-            echo -e "${{ secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
+            echo "$GLOBAL_KEY" > ~/.ssh/id_rsa
           fi
+          
+          # If the key was pasted with literal '\n' strings instead of real newlines, convert them
+          sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+          
+          # Ensure file ends with a newline and has correct permissions
+          echo "" >> ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # Print key fingerprint to verify it's a valid key format before attempting connection
+          ssh-keygen -l -f ~/.ssh/id_rsa || echo "Warning: SSH key format appears invalid! Please check your GitHub Secrets."
 
       - name: Run Diagnostics on VPS
         run: |
