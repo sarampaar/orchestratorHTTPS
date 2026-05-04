@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import dns from 'dns/promises';
 import express from 'express';
 import net from 'net';
+import { exec } from 'child_process';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -33,6 +34,8 @@ const BATCH_WAIT_MS = 10000;
 // -------------------------------------------------------------
 // EXPRESS DASHBOARD SETUP
 // -------------------------------------------------------------
+app.use(express.json());
+
 app.get('/', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -57,10 +60,14 @@ app.get('/', (req, res) => {
         .available span:last-child { color: #4ade80; }
         .taken span:last-child { color: #f87171; }
         .pending span:last-child { color: #facc15; }
-        .actions { margin-top: 3rem; display: flex; gap: 1rem; }
+        .actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; align-items: center; }
+        select { padding: 1rem; border-radius: 0.5rem; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); font-family: 'Inter', sans-serif; cursor: pointer; outline: none; }
+        select option { background: #0f172a; color: white; }
         button { background: #38bdf8; color: #0f172a; border: none; padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s, transform 0.1s; }
         button:hover { background: #7dd3fc; transform: scale(1.05); }
         button:active { transform: scale(0.95); }
+        button.success { background: #10b981; color: white; }
+        button.success:hover { background: #34d399; }
         button.danger { background: #f43f5e; color: white; }
         button.danger:hover { background: #fb7185; }
       </style>
@@ -100,11 +107,33 @@ app.get('/', (req, res) => {
       </div>
       
       <div class="actions">
+        <select id="gen-length">
+          <option value="2">2 Letters</option>
+          <option value="3" selected>3 Letters</option>
+          <option value="4">4 Letters</option>
+          <option value="5">5 Letters</option>
+          <option value="6">6 Letters</option>
+        </select>
+        <button class="success" onclick="generateDomains()">Generate Words</button>
         <button onclick="fetchStats()">Refresh Stats</button>
         <button class="danger" onclick="resetErrors()">Rerun Errors</button>
       </div>
 
       <script>
+        async function generateDomains() {
+          const length = document.getElementById('gen-length').value;
+          if (!confirm('Are you sure you want to generate all ' + length + '-letter words? This runs in the background and may take time for 5+ letters.')) return;
+          try {
+            await fetch('/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ length })
+            });
+            alert('Generation started in the background! Watch the Total count rise.');
+            fetchStats();
+          } catch(e) { alert('Failed to start generation'); }
+        }
+
         async function fetchStats() {
           try {
             const res = await fetch('/api/stats');
@@ -137,12 +166,27 @@ app.get('/', (req, res) => {
   `);
 });
 
+app.post('/api/generate', (req, res) => {
+  const length = parseInt(req.body.length, 10);
+  if (!length || length < 2 || length > 6) {
+    return res.status(400).json({ error: 'Invalid length' });
+  }
+
+  // Spawn generate.js as a background child process
+  exec(`node generate.js ${length}`, (error, stdout, stderr) => {
+    if (error) console.error(\`Generation error: \${error.message}\`);
+    if (stderr) console.error(\`Generation stderr: \${stderr}\`);
+    console.log(\`Generation output: \${stdout}\`);
+  });
+
+  res.json({ message: 'Generation started in background' });
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const total = await prisma.domainWord.count();
     
     // To avoid overloading the DB with 12 simultaneous full table scans, we fetch sequentially or use Promise.all carefully.
-    // For large tables, these counts might be slow without proper indexing.
     const [
       comAvail, comTaken, comPend, comErr,
       orgAvail, orgTaken, orgPend, orgErr,
@@ -194,7 +238,7 @@ app.post('/api/reset-errors', async (req, res) => {
 
 // START EXPRESS SERVER
 app.listen(PORT, () => {
-  console.log(`Dashboard listening on port ${PORT}`);
+  console.log(\`Dashboard listening on port \${PORT}\`);
 });
 
 // -------------------------------------------------------------
@@ -220,7 +264,7 @@ async function checkWhois(domain) {
     const isAvailable = availableStrings.some(str => lowerData.includes(str));
     return isAvailable ? 'available' : 'taken';
   } catch (err) {
-    console.error(`[${domain}] WHOIS error:`, err.message);
+    console.error(\`[\${domain}] WHOIS error:\`, err.message);
     return 'error';
   }
 }
@@ -245,18 +289,18 @@ async function processNextDomain() {
     }
 
     const { id, word } = pendingWord;
-    console.log(`\nProcessing word: ${word}`);
+    console.log(\`\\nProcessing word: \${word}\`);
     let updatedData = {};
 
     // --------------------------------------------------
     // .COM PROCESSING PIPELINE
     // --------------------------------------------------
     if (pendingWord.dns_com === 'pending') {
-      const status = await checkDns(`${word}.com`);
+      const status = await checkDns(\`\${word}.com\`);
       updatedData.dns_com = status;
       if (status === 'taken') updatedData.whois_com = 'skipped'; // Bypass WHOIS
     } else if (pendingWord.whois_com === 'pending' && pendingWord.dns_com === 'nxdomain') {
-      const status = await checkWhois(`${word}.com`);
+      const status = await checkWhois(\`\${word}.com\`);
       updatedData.whois_com = status;
     }
 
@@ -264,11 +308,11 @@ async function processNextDomain() {
     // .ORG PROCESSING PIPELINE
     // --------------------------------------------------
     else if (pendingWord.dns_org === 'pending') {
-      const status = await checkDns(`${word}.org`);
+      const status = await checkDns(\`\${word}.org\`);
       updatedData.dns_org = status;
       if (status === 'taken') updatedData.whois_org = 'skipped';
     } else if (pendingWord.whois_org === 'pending' && pendingWord.dns_org === 'nxdomain') {
-      const status = await checkWhois(`${word}.org`);
+      const status = await checkWhois(\`\${word}.org\`);
       updatedData.whois_org = status;
     }
 
@@ -276,11 +320,11 @@ async function processNextDomain() {
     // .IN PROCESSING PIPELINE
     // --------------------------------------------------
     else if (pendingWord.dns_in === 'pending') {
-      const status = await checkDns(`${word}.in`);
+      const status = await checkDns(\`\${word}.in\`);
       updatedData.dns_in = status;
       if (status === 'taken') updatedData.whois_in = 'skipped';
     } else if (pendingWord.whois_in === 'pending' && pendingWord.dns_in === 'nxdomain') {
-      const status = await checkWhois(`${word}.in`);
+      const status = await checkWhois(\`\${word}.in\`);
       updatedData.whois_in = status;
     }
 
@@ -291,7 +335,7 @@ async function processNextDomain() {
         where: { id },
         data: updatedData
       });
-      console.log(`[${word}] State updated:`, updatedData);
+      console.log(\`[\${word}] State updated:\`, updatedData);
     }
 
     // Wait and loop
