@@ -174,9 +174,9 @@ app.post('/api/generate', (req, res) => {
 
   // Spawn generate.js as a background child process
   exec(`node generate.js ${length}`, (error, stdout, stderr) => {
-    if (error) console.error(\`Generation error: \${error.message}\`);
-    if (stderr) console.error(\`Generation stderr: \${stderr}\`);
-    console.log(\`Generation output: \${stdout}\`);
+    if (error) console.error(`Generation error: ${error.message}`);
+    if (stderr) console.error(`Generation stderr: ${stderr}`);
+    console.log(`Generation output: ${stdout}`);
   });
 
   res.json({ message: 'Generation started in background' });
@@ -238,7 +238,7 @@ app.post('/api/reset-errors', async (req, res) => {
 
 // START EXPRESS SERVER
 app.listen(PORT, () => {
-  console.log(\`Dashboard listening on port \${PORT}\`);
+  console.log(`Dashboard listening on port ${PORT}`);
 });
 
 // -------------------------------------------------------------
@@ -264,7 +264,7 @@ async function checkWhois(domain) {
     const isAvailable = availableStrings.some(str => lowerData.includes(str));
     return isAvailable ? 'available' : 'taken';
   } catch (err) {
-    console.error(\`[\${domain}] WHOIS error:\`, err.message);
+    console.error(`[${domain}] WHOIS error:`, err.message);
     return 'error';
   }
 }
@@ -289,18 +289,18 @@ async function processNextDomain() {
     }
 
     const { id, word } = pendingWord;
-    console.log(\`\\nProcessing word: \${word}\`);
+    console.log(`\nProcessing word: ${word}`);
     let updatedData = {};
 
     // --------------------------------------------------
     // .COM PROCESSING PIPELINE
     // --------------------------------------------------
     if (pendingWord.dns_com === 'pending') {
-      const status = await checkDns(\`\${word}.com\`);
+      const status = await checkDns(`${word}.com`);
       updatedData.dns_com = status;
       if (status === 'taken') updatedData.whois_com = 'skipped'; // Bypass WHOIS
     } else if (pendingWord.whois_com === 'pending' && pendingWord.dns_com === 'nxdomain') {
-      const status = await checkWhois(\`\${word}.com\`);
+      const status = await checkWhois(`${word}.com`);
       updatedData.whois_com = status;
     }
 
@@ -308,11 +308,11 @@ async function processNextDomain() {
     // .ORG PROCESSING PIPELINE
     // --------------------------------------------------
     else if (pendingWord.dns_org === 'pending') {
-      const status = await checkDns(\`\${word}.org\`);
+      const status = await checkDns(`${word}.org`);
       updatedData.dns_org = status;
       if (status === 'taken') updatedData.whois_org = 'skipped';
     } else if (pendingWord.whois_org === 'pending' && pendingWord.dns_org === 'nxdomain') {
-      const status = await checkWhois(\`\${word}.org\`);
+      const status = await checkWhois(`${word}.org`);
       updatedData.whois_org = status;
     }
 
@@ -320,11 +320,11 @@ async function processNextDomain() {
     // .IN PROCESSING PIPELINE
     // --------------------------------------------------
     else if (pendingWord.dns_in === 'pending') {
-      const status = await checkDns(\`\${word}.in\`);
+      const status = await checkDns(`${word}.in`);
       updatedData.dns_in = status;
       if (status === 'taken') updatedData.whois_in = 'skipped';
     } else if (pendingWord.whois_in === 'pending' && pendingWord.dns_in === 'nxdomain') {
-      const status = await checkWhois(\`\${word}.in\`);
+      const status = await checkWhois(`${word}.in`);
       updatedData.whois_in = status;
     }
 
@@ -335,7 +335,7 @@ async function processNextDomain() {
         where: { id },
         data: updatedData
       });
-      console.log(\`[\${word}] State updated:\`, updatedData);
+      console.log(`[${word}] State updated:`, updatedData);
     }
 
     // Wait and loop
