@@ -68,7 +68,7 @@ jobs:
             export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
             export POSTGRES_USER=${{ secrets.POSTGRES_USER || 'admin' }}
             export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'securepassword123' }}
-            docker compose up -d --force-recreate
+            docker compose up -d --build --force-recreate
             sleep 5
             echo "--- Tunnel container status ---"
             docker ps --filter "name=^tunnel$" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
