@@ -1,8 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
-const dns = require('dns').promises;
-const whois = require('whois');
-const util = require('util');
-const express = require('express');
+import { PrismaClient } from '@prisma/client';
+import dns from 'dns/promises';
+import whois from 'whois';
+import util from 'util';
+import express from 'express';
 
 const lookupWhois = util.promisify(whois.lookup);
 const prisma = new PrismaClient();
