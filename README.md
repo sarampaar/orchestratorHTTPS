@@ -1,6 +1,9 @@
 # Orchestrator HTTPS Layer
 
 ## Overview
+> [!NOTE]
+> The Nginx server (`global_nginx:80`)is intended to be temporary or primarily for serving static sites. If a Node.js framework is used, the Next.js container (e.g., `nextjs_demo:3000`) will take care of the traffic directly via Cloudflare Tunnels.
+
 This repository serves as the **single source of truth** for all web applications hosted on the VPS. It automates the deployment of a highly scalable, dynamic Nginx architecture securely connected via Cloudflare Tunnels. 
 
 The primary goal is to achieve a secure `200 OK` HTTP/HTTPS response for infinite domains with near-zero downtime, seamlessly integrating GoDaddy domains, Cloudflare security, and GitHub Actions.

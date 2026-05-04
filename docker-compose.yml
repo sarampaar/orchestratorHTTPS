@@ -48,6 +48,16 @@ services:
     networks:
       - factory_net
 
+  domain_checker:
+    container_name: domain_checker
+    build: ./apps/domain-checker
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-securepassword123}@global_postgres:5432/orchestrator_db
+      - DELAY_MS=5000
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge

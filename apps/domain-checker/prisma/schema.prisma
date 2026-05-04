@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DomainWord {
+  id           Int      @id @default(autoincrement())
+  word         String   @unique
+
+  dns_com      String   @default("pending") // 'pending', 'nxdomain', 'taken', 'error'
+  whois_com    String   @default("pending") // 'pending', 'available', 'taken', 'error', 'skipped'
+
+  dns_org      String   @default("pending")
+  whois_org    String   @default("pending")
+
+  dns_in       String   @default("pending")
+  whois_in     String   @default("pending")
+
+  last_checked DateTime @default(now())
+  created_at   DateTime @default(now())
+}
