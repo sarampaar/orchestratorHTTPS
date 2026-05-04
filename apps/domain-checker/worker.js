@@ -138,7 +138,15 @@ app.get('/', (req, res) => {
           try {
             const res = await fetch('/api/stats');
             const data = await res.json();
+            if (data.error) {
+              document.getElementById('total').innerText = data.error;
+              document.getElementById('total').style.fontSize = '1.2rem';
+              document.getElementById('total').style.color = '#f87171';
+              return;
+            }
             document.getElementById('total').innerText = data.total;
+            document.getElementById('total').style.fontSize = '3rem';
+            document.getElementById('total').style.color = '#f8fafc';
             
             ['com', 'org', 'in'].forEach(tld => {
               document.getElementById(tld+'-avail').innerText = data[tld].available;
@@ -186,27 +194,20 @@ app.get('/api/stats', async (req, res) => {
   try {
     const total = await prisma.domainWord.count();
     
-    // To avoid overloading the DB with 12 simultaneous full table scans, we fetch sequentially or use Promise.all carefully.
-    const [
-      comAvail, comTaken, comPend, comErr,
-      orgAvail, orgTaken, orgPend, orgErr,
-      inAvail, inTaken, inPend, inErr
-    ] = await Promise.all([
-      prisma.domainWord.count({ where: { whois_com: 'available' } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_com: 'taken' }, { whois_com: 'taken' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_com: 'pending' }, { whois_com: 'pending' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_com: 'error' }, { whois_com: 'error' }] } }),
+    const comAvail = await prisma.domainWord.count({ where: { whois_com: 'available' } });
+    const comTaken = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'taken' }, { whois_com: 'taken' }] } });
+    const comPend = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'pending' }, { whois_com: 'pending' }] } });
+    const comErr = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'error' }, { whois_com: 'error' }] } });
 
-      prisma.domainWord.count({ where: { whois_org: 'available' } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_org: 'taken' }, { whois_org: 'taken' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_org: 'pending' }, { whois_org: 'pending' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_org: 'error' }, { whois_org: 'error' }] } }),
+    const orgAvail = await prisma.domainWord.count({ where: { whois_org: 'available' } });
+    const orgTaken = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'taken' }, { whois_org: 'taken' }] } });
+    const orgPend = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'pending' }, { whois_org: 'pending' }] } });
+    const orgErr = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'error' }, { whois_org: 'error' }] } });
 
-      prisma.domainWord.count({ where: { whois_in: 'available' } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_in: 'taken' }, { whois_in: 'taken' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_in: 'pending' }, { whois_in: 'pending' }] } }),
-      prisma.domainWord.count({ where: { OR: [{ dns_in: 'error' }, { whois_in: 'error' }] } })
-    ]);
+    const inAvail = await prisma.domainWord.count({ where: { whois_in: 'available' } });
+    const inTaken = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'taken' }, { whois_in: 'taken' }] } });
+    const inPend = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'pending' }, { whois_in: 'pending' }] } });
+    const inErr = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'error' }, { whois_in: 'error' }] } });
 
     res.json({
       total,
@@ -216,7 +217,7 @@ app.get('/api/stats', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to fetch stats' });
+    res.status(500).json({ error: 'Stats Query Error: ' + err.message });
   }
 });
 
