@@ -11,4 +11,4 @@ COPY . .
 
 RUN npx prisma generate
 
-CMD ["sh", "start.sh"]
+CMD ["sh", "-c", "sleep 5 && npx prisma db push --accept-data-loss && npm start"]

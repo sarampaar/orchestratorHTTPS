@@ -1,13 +1,30 @@
 import { PrismaClient } from '@prisma/client';
 import dns from 'dns/promises';
-import whois from 'whois';
-import util from 'util';
 import express from 'express';
+import net from 'net';
 
-const lookupWhois = util.promisify(whois.lookup);
 const prisma = new PrismaClient();
 const app = express();
 const PORT = 3000;
+
+function lookupWhois(domain) {
+  return new Promise((resolve, reject) => {
+    let server = 'whois.iana.org';
+    if (domain.endsWith('.com')) server = 'whois.verisign-grs.com';
+    else if (domain.endsWith('.org')) server = 'whois.pir.org';
+    else if (domain.endsWith('.in')) server = 'whois.registry.in';
+
+    const client = new net.Socket();
+    let data = '';
+    client.connect(43, server, () => {
+      client.write(domain + '\r\n');
+    });
+    client.on('data', chunk => { data += chunk; });
+    client.on('close', () => { resolve(data); });
+    client.on('error', reject);
+    client.setTimeout(10000, () => { client.destroy(); reject(new Error('Timeout')); });
+  });
+}
 
 // Configuration
 const DELAY_MS = parseInt(process.env.DELAY_MS || '5000', 10);
