@@ -389,17 +389,33 @@ async function processNextDomain() {
   try {
     if (pendingQueue.length === 0) {
       console.log('Fetching next batch from database...');
+      // PHASE 1: Prioritize blazing fast DNS checks for the entire database
       pendingQueue = await prisma.domainWord.findMany({
         where: {
           OR: [
-            { dns_com: 'pending' }, { whois_com: 'pending' },
-            { dns_org: 'pending' }, { whois_org: 'pending' },
-            { dns_in: 'pending' }, { whois_in: 'pending' }
+            { dns_com: 'pending' },
+            { dns_org: 'pending' },
+            { dns_in: 'pending' }
           ]
         },
         take: 100,
         orderBy: { id: 'asc' }
       });
+
+      // PHASE 2: Only if all DNS checks are done (or none pending), do WHOIS
+      if (pendingQueue.length === 0) {
+        pendingQueue = await prisma.domainWord.findMany({
+          where: {
+            OR: [
+              { whois_com: 'pending', dns_com: 'nxdomain' },
+              { whois_org: 'pending', dns_org: 'nxdomain' },
+              { whois_in: 'pending', dns_in: 'nxdomain' }
+            ]
+          },
+          take: 100,
+          orderBy: { id: 'asc' }
+        });
+      }
 
       if (pendingQueue.length === 0) {
         console.log('No pending words found. Waiting before next check...');
