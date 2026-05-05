@@ -248,10 +248,14 @@ app.listen(PORT, () => {
 
 async function checkDns(domain) {
   try {
-    await dns.resolve(domain);
-    return 'taken'; // If A records exist, it's definitively taken
+    await Promise.any([
+      dns.resolve(domain),
+      dns.resolveNs(domain),
+      dns.resolveMx(domain)
+    ]);
+    return 'taken'; // If any standard records exist, it's definitively taken
   } catch (error) {
-    return 'nxdomain'; // No A records found, needs WHOIS
+    return 'nxdomain'; // No records found, needs WHOIS
   }
 }
 
@@ -259,6 +263,14 @@ async function checkWhois(domain) {
   try {
     const data = await lookupWhois(domain);
     const lowerData = data.toLowerCase();
+    
+    // Check for common rate limit / block messages
+    const errorStrings = ['rate limit', 'exceeded', 'blocked', 'blacklisted', 'timeout', 'please try again', 'connection reset', 'limit exceeded', 'quota', 'wait'];
+    if (errorStrings.some(str => lowerData.includes(str))) {
+      console.warn(`[${domain}] WHOIS rate limited/blocked. Response snippet: ${data.substring(0, 100)}`);
+      return 'error';
+    }
+
     const availableStrings = [
       'no match for', 'not found', 'is available for registration', 'no data found', 'no match'
     ];
@@ -292,6 +304,7 @@ async function processNextDomain() {
     const { id, word } = pendingWord;
     console.log(`\nProcessing word: ${word}`);
     let updatedData = {};
+    let didWhois = false;
 
     // --------------------------------------------------
     // .COM PROCESSING PIPELINE
@@ -303,6 +316,7 @@ async function processNextDomain() {
     } else if (pendingWord.whois_com === 'pending' && pendingWord.dns_com === 'nxdomain') {
       const status = await checkWhois(`${word}.com`);
       updatedData.whois_com = status;
+      didWhois = true;
     }
 
     // --------------------------------------------------
@@ -315,6 +329,7 @@ async function processNextDomain() {
     } else if (pendingWord.whois_org === 'pending' && pendingWord.dns_org === 'nxdomain') {
       const status = await checkWhois(`${word}.org`);
       updatedData.whois_org = status;
+      didWhois = true;
     }
 
     // --------------------------------------------------
@@ -327,6 +342,7 @@ async function processNextDomain() {
     } else if (pendingWord.whois_in === 'pending' && pendingWord.dns_in === 'nxdomain') {
       const status = await checkWhois(`${word}.in`);
       updatedData.whois_in = status;
+      didWhois = true;
     }
 
     // UPDATE DATABASE
@@ -340,7 +356,12 @@ async function processNextDomain() {
     }
 
     // Wait and loop
-    setTimeout(processNextDomain, DELAY_MS);
+    if (didWhois) {
+      setTimeout(processNextDomain, DELAY_MS);
+    } else {
+      // Fast path for DNS checks
+      setTimeout(processNextDomain, 50); 
+    }
   } catch (err) {
     console.error('Worker loop error:', err.message);
     setTimeout(processNextDomain, BATCH_WAIT_MS);
