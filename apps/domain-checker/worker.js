@@ -257,21 +257,40 @@ app.get('/api/stats', async (req, res) => {
       result.total += count;
 
       result.dns.com[group.dns_com] = (result.dns.com[group.dns_com] || 0) + count;
-      result.whois.com[group.whois_com] = (result.whois.com[group.whois_com] || 0) + count;
-
       result.dns.org[group.dns_org] = (result.dns.org[group.dns_org] || 0) + count;
-      result.whois.org[group.whois_org] = (result.whois.org[group.whois_org] || 0) + count;
-
       result.dns.in[group.dns_in] = (result.dns.in[group.dns_in] || 0) + count;
-      result.whois.in[group.whois_in] = (result.whois.in[group.whois_in] || 0) + count;
+
+      // Only count whois as 'pending' if it has passed the DNS phase (nxdomain)
+      if (group.whois_com === 'pending') {
+        if (group.dns_com === 'nxdomain') {
+          result.whois.com.pending = (result.whois.com.pending || 0) + count;
+          whoisPendingCount += count;
+        }
+      } else {
+        result.whois.com[group.whois_com] = (result.whois.com[group.whois_com] || 0) + count;
+      }
+
+      if (group.whois_org === 'pending') {
+        if (group.dns_org === 'nxdomain') {
+          result.whois.org.pending = (result.whois.org.pending || 0) + count;
+          whoisPendingCount += count;
+        }
+      } else {
+        result.whois.org[group.whois_org] = (result.whois.org[group.whois_org] || 0) + count;
+      }
+
+      if (group.whois_in === 'pending') {
+        if (group.dns_in === 'nxdomain') {
+          result.whois.in.pending = (result.whois.in.pending || 0) + count;
+          whoisPendingCount += count;
+        }
+      } else {
+        result.whois.in[group.whois_in] = (result.whois.in[group.whois_in] || 0) + count;
+      }
 
       if (group.dns_com === 'pending') dnsPendingCount += count;
       if (group.dns_org === 'pending') dnsPendingCount += count;
       if (group.dns_in === 'pending') dnsPendingCount += count;
-
-      if (group.whois_com === 'pending' && group.dns_com === 'nxdomain') whoisPendingCount += count;
-      if (group.whois_org === 'pending' && group.dns_org === 'nxdomain') whoisPendingCount += count;
-      if (group.whois_in === 'pending' && group.dns_in === 'nxdomain') whoisPendingCount += count;
     }
 
     // Calculate ETA (0.05 seconds per DNS loop, 5.0 seconds per WHOIS loop)
