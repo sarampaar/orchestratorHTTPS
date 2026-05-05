@@ -51,28 +51,36 @@ app.get('/', (req, res) => {
         .total-box { background: rgba(255,255,255,0.05); padding: 1.5rem 3rem; border-radius: 1rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .total-box h2 { margin: 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; }
         .total-box p { margin: 0.5rem 0 0; font-size: 3rem; font-weight: 800; }
-        .eta-box { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 1rem 2rem; border-radius: 0.5rem; text-align: center; margin-bottom: 2rem; }
+        .eta-box { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 1rem 2rem; border-radius: 0.5rem; text-align: center; margin-bottom: 1rem; width: 100%; max-width: 600px; }
         .eta-box p { margin: 0; font-size: 1.5rem; font-weight: 600; color: #34d399; }
+        .status-box { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; padding: 1rem 2rem; border-radius: 0.5rem; text-align: center; margin-bottom: 2rem; width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; }
+        .status-box p { margin: 0; font-size: 1.5rem; font-weight: 600; color: #7dd3fc; }
         .section-title { font-size: 2rem; margin: 2rem 0 1rem; text-align: center; color: #38bdf8; width: 100%; max-width: 1200px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; width: 100%; max-width: 1200px; }
-        .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 2rem; backdrop-filter: blur(10px); transition: transform 0.2s; }
-        .card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.08); }
-        .card h2 { margin: 0 0 1.5rem 0; font-size: 1.5rem; color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; text-align: center; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; width: 100%; max-width: 1200px; }
+        .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 1.5rem; backdrop-filter: blur(10px); transition: transform 0.2s; display: flex; flex-direction: column; }
+        .card h2 { margin: 0 0 1rem 0; font-size: 1.5rem; color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 1.1rem; }
         .stat-row span:last-child { font-weight: 800; }
         .available span:last-child { color: #4ade80; }
         .taken span:last-child { color: #f87171; }
         .pending span:last-child { color: #facc15; }
-        .actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; align-items: center; }
-        select { padding: 1rem; border-radius: 0.5rem; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); outline: none; }
-        select option { background: #0f172a; color: white; }
-        button { background: #38bdf8; color: #0f172a; border: none; padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s, transform 0.1s; }
-        button:hover { background: #7dd3fc; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
+        
+        .card-actions { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 0.5rem; }
+        .row-btns { display: flex; gap: 0.5rem; }
+        
+        button { background: #38bdf8; color: #0f172a; border: none; padding: 0.8rem 1rem; font-size: 0.9rem; font-weight: 600; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s, transform 0.1s; flex: 1; }
+        button:hover { background: #7dd3fc; transform: scale(1.02); }
+        button:active { transform: scale(0.98); }
         button.success { background: #10b981; color: white; }
         button.success:hover { background: #34d399; }
         button.danger { background: #f43f5e; color: white; }
         button.danger:hover { background: #fb7185; }
+        button.warning { background: #f59e0b; color: white; }
+        button.warning:hover { background: #fbbf24; }
+        
+        .global-actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; align-items: center; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 1rem; }
+        select { padding: 1rem; border-radius: 0.5rem; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); outline: none; }
+        select option { background: #0f172a; color: white; }
       </style>
     </head>
     <body>
@@ -86,6 +94,11 @@ app.get('/', (req, res) => {
         <p id="eta">Calculating ETA...</p>
       </div>
       
+      <div class="status-box">
+        <p id="current-status">System Idle</p>
+        <button class="danger" style="flex: 0 0 auto;" onclick="control('stop')">⏹ Stop All Tasks</button>
+      </div>
+      
       <h2 class="section-title">Phase 1: DNS Checks (Source of Truth)</h2>
       <div class="grid" id="dns-container">
         <!-- .COM -->
@@ -95,6 +108,13 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-com-taken">...</span></div>
           <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-com-nxdomain">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="dns-com-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'dns_com')">▶ Start .com DNS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'dns_com')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'dns_com')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
         <!-- .ORG -->
         <div class="card">
@@ -103,6 +123,13 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-org-taken">...</span></div>
           <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-org-nxdomain">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="dns-org-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'dns_org')">▶ Start .org DNS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'dns_org')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'dns_org')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
         <!-- .IN -->
         <div class="card">
@@ -111,6 +138,13 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-in-taken">...</span></div>
           <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-in-nxdomain">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="dns-in-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'dns_in')">▶ Start .in DNS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'dns_in')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'dns_in')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -124,6 +158,13 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-com-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-com-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-com-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'whois_com')">▶ Start .com WHOIS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'whois_com')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'whois_com')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
         <!-- .ORG -->
         <div class="card">
@@ -133,6 +174,13 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-org-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-org-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-org-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'whois_org')">▶ Start .org WHOIS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'whois_org')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'whois_org')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
         <!-- .IN -->
         <div class="card">
@@ -142,10 +190,17 @@ app.get('/', (req, res) => {
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-in-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-in-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-in-err">...</span></div>
+          <div class="card-actions">
+            <button class="success" onclick="control('start', 'whois_in')">▶ Start .in WHOIS</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'whois_in')">↻ Reset All</button>
+              <button class="danger" onclick="control('rerun_errors', 'whois_in')">⚠ Reset Errors</button>
+            </div>
+          </div>
         </div>
       </div>
       
-      <div class="actions">
+      <div class="global-actions">
         <select id="gen-length">
           <option value="2">2 Letters</option>
           <option value="3" selected>3 Letters</option>
@@ -153,15 +208,30 @@ app.get('/', (req, res) => {
           <option value="5">5 Letters</option>
           <option value="6">6 Letters</option>
         </select>
-        <button class="success" onclick="generateDomains()">Generate Words</button>
-        <button onclick="fetchStats()">Refresh Stats</button>
-        <button class="danger" onclick="resetErrors()">Rerun Errors</button>
+        <button onclick="generateDomains()">Generate New Words</button>
       </div>
 
       <script>
+        async function control(action, task) {
+          let msg = action === 'stop' ? 'Stop all tasks?' : \`\${action.toUpperCase()} task \${task}?\`;
+          if (action === 'reset') msg = \`WARNING: Reset ALL progress for \${task} back to pending?\`;
+          if (!confirm(msg)) return;
+
+          try {
+            const res = await fetch('/api/control', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action, task })
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            fetchStats();
+          } catch(e) { alert('Action failed'); }
+        }
+
         async function generateDomains() {
           const length = document.getElementById('gen-length').value;
-          if (!confirm('Are you sure you want to generate all ' + length + '-letter words?')) return;
+          if (!confirm(\`Are you sure you want to generate all \${length}-letter words?\`)) return;
           try {
             await fetch('/api/generate', {
               method: 'POST',
@@ -182,7 +252,16 @@ app.get('/', (req, res) => {
               return;
             }
             document.getElementById('total').innerText = data.total;
-            document.getElementById('eta').innerText = 'Estimated Time: ' + data.eta;
+            document.getElementById('eta').innerText = 'Estimated Queue Time: ' + data.eta;
+            
+            const statusEl = document.getElementById('current-status');
+            if (data.currentTask) {
+              statusEl.innerText = '⚙ Currently Running: ' + data.currentTask.toUpperCase();
+              statusEl.style.color = '#4ade80';
+            } else {
+              statusEl.innerText = '⏸ System Idle';
+              statusEl.style.color = '#f87171';
+            }
             
             ['com', 'org', 'in'].forEach(tld => {
               document.getElementById('dns-'+tld+'-pending').innerText = data.dns[tld].pending || 0;
@@ -199,15 +278,6 @@ app.get('/', (req, res) => {
           } catch (e) { console.error('Failed to fetch stats'); }
         }
         
-        async function resetErrors() {
-          if (!confirm('Are you sure you want to reset all errored domains to pending?')) return;
-          try {
-            await fetch('/api/reset-errors', { method: 'POST' });
-            fetchStats();
-            alert('Errors reset successfully!');
-          } catch (e) { alert('Failed to reset errors'); }
-        }
-
         fetchStats();
         setInterval(fetchStats, 5000);
       </script>
@@ -216,13 +286,57 @@ app.get('/', (req, res) => {
   `);
 });
 
+app.post('/api/control', async (req, res) => {
+  const { action, task } = req.body;
+
+  try {
+    if (action === 'stop') {
+      isRunning = false;
+      currentTask = null;
+      pendingQueue = [];
+      return res.json({ message: 'Stopped' });
+    }
+
+    if (!task) return res.status(400).json({ error: 'Task required' });
+
+    if (action === 'start') {
+      if (isRunning) return res.status(400).json({ error: 'Another task is currently running. Stop it first.' });
+      currentTask = task;
+      isRunning = true;
+      pendingQueue = [];
+      // Kickstart loop if it was idle
+      setImmediate(processNextDomain);
+      return res.json({ message: `Started ${task}` });
+    }
+
+    if (action === 'reset') {
+      const tld = task.split('_')[1];
+      if (task.startsWith('dns_')) {
+        await prisma.domainWord.updateMany({ data: { [task]: 'pending', [`whois_${tld}`]: 'pending' } });
+      } else {
+        await prisma.domainWord.updateMany({ data: { [task]: 'pending' } });
+      }
+      return res.json({ message: `Reset ${task}` });
+    }
+
+    if (action === 'rerun_errors') {
+      await prisma.domainWord.updateMany({ where: { [task]: 'error' }, data: { [task]: 'pending' } });
+      return res.json({ message: `Errors reset for ${task}` });
+    }
+
+    res.status(400).json({ error: 'Invalid action' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Control Error: ' + e.message });
+  }
+});
+
 app.post('/api/generate', (req, res) => {
   const length = parseInt(req.body.length, 10);
   if (!length || length < 2 || length > 6) {
     return res.status(400).json({ error: 'Invalid length' });
   }
 
-  // Spawn generate.js as a background child process
   exec(`node generate.js ${length}`, (error, stdout, stderr) => {
     if (error) console.error(`Generation error: ${error.message}`);
     if (stderr) console.error(`Generation stderr: ${stderr}`);
@@ -241,6 +355,7 @@ app.get('/api/stats', async (req, res) => {
 
     const result = {
       total: 0,
+      currentTask: isRunning ? currentTask : null,
       dns: {
         com: {}, org: {}, in: {}
       },
@@ -322,22 +437,6 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-app.post('/api/reset-errors', async (req, res) => {
-  try {
-    await prisma.$transaction([
-      prisma.domainWord.updateMany({ where: { dns_com: 'error' }, data: { dns_com: 'pending' } }),
-      prisma.domainWord.updateMany({ where: { whois_com: 'error' }, data: { whois_com: 'pending' } }),
-      prisma.domainWord.updateMany({ where: { dns_org: 'error' }, data: { dns_org: 'pending' } }),
-      prisma.domainWord.updateMany({ where: { whois_org: 'error' }, data: { whois_org: 'pending' } }),
-      prisma.domainWord.updateMany({ where: { dns_in: 'error' }, data: { dns_in: 'pending' } }),
-      prisma.domainWord.updateMany({ where: { whois_in: 'error' }, data: { whois_in: 'pending' } }),
-    ]);
-    res.json({ message: 'Reset successful' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to reset errors' });
-  }
-});
-
 // START EXPRESS SERVER
 app.listen(PORT, () => {
   console.log(`Dashboard listening on port ${PORT}`);
@@ -348,6 +447,8 @@ app.listen(PORT, () => {
 // -------------------------------------------------------------
 
 let pendingQueue = [];
+let currentTask = null;
+let isRunning = false;
 
 async function checkDns(domain) {
   try {
@@ -386,115 +487,71 @@ async function checkWhois(domain) {
 }
 
 async function processNextDomain() {
+  if (!isRunning || !currentTask) {
+    setTimeout(processNextDomain, 1000); // Idle loop
+    return;
+  }
+
   try {
     if (pendingQueue.length === 0) {
-      console.log('Fetching next batch from database...');
-      // PHASE 1: Prioritize blazing fast DNS checks for the entire database
+      let whereClause = {};
+      if (currentTask.startsWith('dns_')) {
+        whereClause[currentTask] = 'pending';
+      } else if (currentTask.startsWith('whois_')) {
+        const tld = currentTask.split('_')[1];
+        whereClause[currentTask] = 'pending';
+        whereClause[`dns_${tld}`] = 'nxdomain';
+      }
+
       pendingQueue = await prisma.domainWord.findMany({
-        where: {
-          OR: [
-            { dns_com: 'pending' },
-            { dns_org: 'pending' },
-            { dns_in: 'pending' }
-          ]
-        },
+        where: whereClause,
         take: 100,
         orderBy: { id: 'asc' }
       });
 
-      // PHASE 2: Only if all DNS checks are done (or none pending), do WHOIS
       if (pendingQueue.length === 0) {
-        pendingQueue = await prisma.domainWord.findMany({
-          where: {
-            OR: [
-              { whois_com: 'pending', dns_com: 'nxdomain' },
-              { whois_org: 'pending', dns_org: 'nxdomain' },
-              { whois_in: 'pending', dns_in: 'nxdomain' }
-            ]
-          },
-          take: 100,
-          orderBy: { id: 'asc' }
-        });
-      }
-
-      if (pendingQueue.length === 0) {
-        console.log('No pending words found. Waiting before next check...');
-        setTimeout(processNextDomain, BATCH_WAIT_MS);
+        console.log(`Task ${currentTask} complete or no pending items.`);
+        currentTask = null;
+        isRunning = false;
+        setTimeout(processNextDomain, 1000);
         return;
       }
     }
 
     const wordObj = pendingQueue[0];
     const { id, word } = wordObj;
-    console.log(`\nProcessing word: ${word}`);
+    
     let updatedData = {};
-    let didWhois = false;
+    let delayMs = 50;
 
-    // Fast DNS phase (can do all 3 simultaneously)
-    const dnsPromises = [];
-    if (wordObj.dns_com === 'pending') {
-      dnsPromises.push(checkDns(`${word}.com`).then(s => { 
-        updatedData.dns_com = s; wordObj.dns_com = s; 
-        if (s === 'taken') { updatedData.whois_com = 'skipped'; wordObj.whois_com = 'skipped'; } 
-      }));
-    }
-    if (wordObj.dns_org === 'pending') {
-      dnsPromises.push(checkDns(`${word}.org`).then(s => { 
-        updatedData.dns_org = s; wordObj.dns_org = s; 
-        if (s === 'taken') { updatedData.whois_org = 'skipped'; wordObj.whois_org = 'skipped'; } 
-      }));
-    }
-    if (wordObj.dns_in === 'pending') {
-      dnsPromises.push(checkDns(`${word}.in`).then(s => { 
-        updatedData.dns_in = s; wordObj.dns_in = s; 
-        if (s === 'taken') { updatedData.whois_in = 'skipped'; wordObj.whois_in = 'skipped'; } 
-      }));
-    }
-
-    if (dnsPromises.length > 0) {
-      // Execute all pending DNS checks for this word in parallel
-      await Promise.all(dnsPromises);
-    } else {
-      // No DNS pending, do ONE WHOIS check (to respect rate limits)
-      if (wordObj.whois_com === 'pending' && wordObj.dns_com === 'nxdomain') {
-        const s = await checkWhois(`${word}.com`);
-        updatedData.whois_com = s; wordObj.whois_com = s; didWhois = true;
-      } else if (wordObj.whois_org === 'pending' && wordObj.dns_org === 'nxdomain') {
-        const s = await checkWhois(`${word}.org`);
-        updatedData.whois_org = s; wordObj.whois_org = s; didWhois = true;
-      } else if (wordObj.whois_in === 'pending' && wordObj.dns_in === 'nxdomain') {
-        const s = await checkWhois(`${word}.in`);
-        updatedData.whois_in = s; wordObj.whois_in = s; didWhois = true;
+    if (currentTask.startsWith('dns_')) {
+      const tld = currentTask.split('_')[1];
+      const status = await checkDns(`${word}.${tld}`);
+      updatedData[currentTask] = status;
+      if (status === 'taken') {
+        updatedData[`whois_${tld}`] = 'skipped';
       }
-    }
-
-    // Check if word is fully processed
-    const isDone = 
-      wordObj.dns_com !== 'pending' && wordObj.whois_com !== 'pending' &&
-      wordObj.dns_org !== 'pending' && wordObj.whois_org !== 'pending' &&
-      wordObj.dns_in !== 'pending' && wordObj.whois_in !== 'pending';
-
-    if (isDone) {
-      pendingQueue.shift(); // Remove from in-memory queue
+      delayMs = 50; // Max speed for DNS
+    } else if (currentTask.startsWith('whois_')) {
+      const tld = currentTask.split('_')[1];
+      const status = await checkWhois(`${word}.${tld}`);
+      updatedData[currentTask] = status;
+      delayMs = DELAY_MS; // Obey rate limits for WHOIS
     }
 
     // UPDATE DATABASE
-    if (Object.keys(updatedData).length > 0) {
-      updatedData.last_checked = new Date();
-      await prisma.domainWord.update({
-        where: { id },
-        data: updatedData
-      });
-      console.log(`[${word}] State updated:`, updatedData);
-    }
+    updatedData.last_checked = new Date();
+    await prisma.domainWord.update({
+      where: { id },
+      data: updatedData
+    });
+    console.log(`[${currentTask}] Processed ${word} ->`, updatedData[currentTask]);
 
-    // Wait and loop
-    if (didWhois) {
-      setTimeout(processNextDomain, DELAY_MS);
-    } else {
-      // Fast path for DNS checks
-      setTimeout(processNextDomain, 50); 
-    }
+    // Unconditionally remove from memory queue so we always advance
+    pendingQueue.shift();
+
+    setTimeout(processNextDomain, delayMs);
+
   } catch (err) {
     console.error('Worker loop error:', err.message);
     pendingQueue = []; // Clear queue to prevent infinite error loops on a corrupted row
