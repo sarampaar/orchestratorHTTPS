@@ -48,20 +48,23 @@ app.get('/', (req, res) => {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 2rem; box-sizing: border-box; }
         h1 { font-size: 3rem; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2rem; text-align: center; }
-        .total-box { background: rgba(255,255,255,0.05); padding: 1.5rem 3rem; border-radius: 1rem; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1); }
+        .total-box { background: rgba(255,255,255,0.05); padding: 1.5rem 3rem; border-radius: 1rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .total-box h2 { margin: 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; }
         .total-box p { margin: 0.5rem 0 0; font-size: 3rem; font-weight: 800; }
+        .eta-box { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 1rem 2rem; border-radius: 0.5rem; text-align: center; margin-bottom: 2rem; }
+        .eta-box p { margin: 0; font-size: 1.5rem; font-weight: 600; color: #34d399; }
+        .section-title { font-size: 2rem; margin: 2rem 0 1rem; text-align: center; color: #38bdf8; width: 100%; max-width: 1200px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; width: 100%; max-width: 1200px; }
         .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 2rem; backdrop-filter: blur(10px); transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.08); }
-        .card h2 { margin: 0 0 1.5rem 0; font-size: 1.8rem; color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; text-align: center; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.2rem; }
+        .card h2 { margin: 0 0 1.5rem 0; font-size: 1.5rem; color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; text-align: center; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.1rem; }
         .stat-row span:last-child { font-weight: 800; }
         .available span:last-child { color: #4ade80; }
         .taken span:last-child { color: #f87171; }
         .pending span:last-child { color: #facc15; }
         .actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; align-items: center; }
-        select { padding: 1rem; border-radius: 0.5rem; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); font-family: 'Inter', sans-serif; cursor: pointer; outline: none; }
+        select { padding: 1rem; border-radius: 0.5rem; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); outline: none; }
         select option { background: #0f172a; color: white; }
         button { background: #38bdf8; color: #0f172a; border: none; padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s, transform 0.1s; }
         button:hover { background: #7dd3fc; transform: scale(1.05); }
@@ -78,31 +81,67 @@ app.get('/', (req, res) => {
         <h2>Total Generated Words</h2>
         <p id="total">...</p>
       </div>
+
+      <div class="eta-box">
+        <p id="eta">Calculating ETA...</p>
+      </div>
       
-      <div class="grid" id="stats-container">
+      <h2 class="section-title">Phase 1: DNS Checks (Source of Truth)</h2>
+      <div class="grid" id="dns-container">
         <!-- .COM -->
         <div class="card">
-          <h2>.com</h2>
-          <div class="stat-row available"><span>Available:</span> <span id="com-avail">...</span></div>
-          <div class="stat-row taken"><span>Taken:</span> <span id="com-taken">...</span></div>
-          <div class="stat-row pending"><span>Pending:</span> <span id="com-pending">...</span></div>
-          <div class="stat-row"><span>Errors:</span> <span id="com-err">...</span></div>
+          <h2>.com DNS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="dns-com-pending">...</span></div>
+          <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-com-taken">...</span></div>
+          <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-com-nxdomain">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="dns-com-err">...</span></div>
         </div>
         <!-- .ORG -->
         <div class="card">
-          <h2>.org</h2>
-          <div class="stat-row available"><span>Available:</span> <span id="org-avail">...</span></div>
-          <div class="stat-row taken"><span>Taken:</span> <span id="org-taken">...</span></div>
-          <div class="stat-row pending"><span>Pending:</span> <span id="org-pending">...</span></div>
-          <div class="stat-row"><span>Errors:</span> <span id="org-err">...</span></div>
+          <h2>.org DNS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="dns-org-pending">...</span></div>
+          <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-org-taken">...</span></div>
+          <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-org-nxdomain">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="dns-org-err">...</span></div>
         </div>
         <!-- .IN -->
         <div class="card">
-          <h2>.in</h2>
-          <div class="stat-row available"><span>Available:</span> <span id="in-avail">...</span></div>
-          <div class="stat-row taken"><span>Taken:</span> <span id="in-taken">...</span></div>
-          <div class="stat-row pending"><span>Pending:</span> <span id="in-pending">...</span></div>
-          <div class="stat-row"><span>Errors:</span> <span id="in-err">...</span></div>
+          <h2>.in DNS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="dns-in-pending">...</span></div>
+          <div class="stat-row taken"><span>Taken (A/NS/MX):</span> <span id="dns-in-taken">...</span></div>
+          <div class="stat-row"><span>NXDomain (To WHOIS):</span> <span id="dns-in-nxdomain">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="dns-in-err">...</span></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Phase 2: WHOIS Checks (The Possibility)</h2>
+      <div class="grid" id="whois-container">
+        <!-- .COM -->
+        <div class="card">
+          <h2>.com WHOIS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="whois-com-pending">...</span></div>
+          <div class="stat-row available"><span>Available:</span> <span id="whois-com-avail">...</span></div>
+          <div class="stat-row taken"><span>Taken:</span> <span id="whois-com-taken">...</span></div>
+          <div class="stat-row"><span>Skipped:</span> <span id="whois-com-skipped">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="whois-com-err">...</span></div>
+        </div>
+        <!-- .ORG -->
+        <div class="card">
+          <h2>.org WHOIS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="whois-org-pending">...</span></div>
+          <div class="stat-row available"><span>Available:</span> <span id="whois-org-avail">...</span></div>
+          <div class="stat-row taken"><span>Taken:</span> <span id="whois-org-taken">...</span></div>
+          <div class="stat-row"><span>Skipped:</span> <span id="whois-org-skipped">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="whois-org-err">...</span></div>
+        </div>
+        <!-- .IN -->
+        <div class="card">
+          <h2>.in WHOIS</h2>
+          <div class="stat-row pending"><span>Pending:</span> <span id="whois-in-pending">...</span></div>
+          <div class="stat-row available"><span>Available:</span> <span id="whois-in-avail">...</span></div>
+          <div class="stat-row taken"><span>Taken:</span> <span id="whois-in-taken">...</span></div>
+          <div class="stat-row"><span>Skipped:</span> <span id="whois-in-skipped">...</span></div>
+          <div class="stat-row"><span>Errors:</span> <span id="whois-in-err">...</span></div>
         </div>
       </div>
       
@@ -122,14 +161,14 @@ app.get('/', (req, res) => {
       <script>
         async function generateDomains() {
           const length = document.getElementById('gen-length').value;
-          if (!confirm('Are you sure you want to generate all ' + length + '-letter words? This runs in the background and may take time for 5+ letters.')) return;
+          if (!confirm('Are you sure you want to generate all ' + length + '-letter words?')) return;
           try {
             await fetch('/api/generate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ length })
             });
-            alert('Generation started in the background! Watch the Total count rise.');
+            alert('Generation started in the background!');
             fetchStats();
           } catch(e) { alert('Failed to start generation'); }
         }
@@ -140,19 +179,22 @@ app.get('/', (req, res) => {
             const data = await res.json();
             if (data.error) {
               document.getElementById('total').innerText = data.error;
-              document.getElementById('total').style.fontSize = '1.2rem';
-              document.getElementById('total').style.color = '#f87171';
               return;
             }
             document.getElementById('total').innerText = data.total;
-            document.getElementById('total').style.fontSize = '3rem';
-            document.getElementById('total').style.color = '#f8fafc';
+            document.getElementById('eta').innerText = 'Estimated Time: ' + data.eta;
             
             ['com', 'org', 'in'].forEach(tld => {
-              document.getElementById(tld+'-avail').innerText = data[tld].available;
-              document.getElementById(tld+'-taken').innerText = data[tld].taken;
-              document.getElementById(tld+'-pending').innerText = data[tld].pending;
-              document.getElementById(tld+'-err').innerText = data[tld].error;
+              document.getElementById('dns-'+tld+'-pending').innerText = data.dns[tld].pending || 0;
+              document.getElementById('dns-'+tld+'-taken').innerText = data.dns[tld].taken || 0;
+              document.getElementById('dns-'+tld+'-nxdomain').innerText = data.dns[tld].nxdomain || 0;
+              document.getElementById('dns-'+tld+'-err').innerText = data.dns[tld].error || 0;
+
+              document.getElementById('whois-'+tld+'-pending').innerText = data.whois[tld].pending || 0;
+              document.getElementById('whois-'+tld+'-avail').innerText = data.whois[tld].available || 0;
+              document.getElementById('whois-'+tld+'-taken').innerText = data.whois[tld].taken || 0;
+              document.getElementById('whois-'+tld+'-skipped').innerText = data.whois[tld].skipped || 0;
+              document.getElementById('whois-'+tld+'-err').innerText = data.whois[tld].error || 0;
             });
           } catch (e) { console.error('Failed to fetch stats'); }
         }
@@ -192,29 +234,69 @@ app.post('/api/generate', (req, res) => {
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const total = await prisma.domainWord.count();
-    
-    const comAvail = await prisma.domainWord.count({ where: { whois_com: 'available' } });
-    const comTaken = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'taken' }, { whois_com: 'taken' }] } });
-    const comPend = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'pending' }, { whois_com: 'pending' }] } });
-    const comErr = await prisma.domainWord.count({ where: { OR: [{ dns_com: 'error' }, { whois_com: 'error' }] } });
-
-    const orgAvail = await prisma.domainWord.count({ where: { whois_org: 'available' } });
-    const orgTaken = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'taken' }, { whois_org: 'taken' }] } });
-    const orgPend = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'pending' }, { whois_org: 'pending' }] } });
-    const orgErr = await prisma.domainWord.count({ where: { OR: [{ dns_org: 'error' }, { whois_org: 'error' }] } });
-
-    const inAvail = await prisma.domainWord.count({ where: { whois_in: 'available' } });
-    const inTaken = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'taken' }, { whois_in: 'taken' }] } });
-    const inPend = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'pending' }, { whois_in: 'pending' }] } });
-    const inErr = await prisma.domainWord.count({ where: { OR: [{ dns_in: 'error' }, { whois_in: 'error' }] } });
-
-    res.json({
-      total,
-      com: { available: comAvail, taken: comTaken, pending: comPend, error: comErr },
-      org: { available: orgAvail, taken: orgTaken, pending: orgPend, error: orgErr },
-      in: { available: inAvail, taken: inTaken, pending: inPend, error: inErr }
+    const stats = await prisma.domainWord.groupBy({
+      by: ['dns_com', 'whois_com', 'dns_org', 'whois_org', 'dns_in', 'whois_in'],
+      _count: true
     });
+
+    const result = {
+      total: 0,
+      dns: {
+        com: {}, org: {}, in: {}
+      },
+      whois: {
+        com: {}, org: {}, in: {}
+      }
+    };
+
+    let dnsPendingCount = 0;
+    let whoisPendingCount = 0;
+
+    for (const group of stats) {
+      const count = group._count;
+      result.total += count;
+
+      result.dns.com[group.dns_com] = (result.dns.com[group.dns_com] || 0) + count;
+      result.whois.com[group.whois_com] = (result.whois.com[group.whois_com] || 0) + count;
+
+      result.dns.org[group.dns_org] = (result.dns.org[group.dns_org] || 0) + count;
+      result.whois.org[group.whois_org] = (result.whois.org[group.whois_org] || 0) + count;
+
+      result.dns.in[group.dns_in] = (result.dns.in[group.dns_in] || 0) + count;
+      result.whois.in[group.whois_in] = (result.whois.in[group.whois_in] || 0) + count;
+
+      if (group.dns_com === 'pending') dnsPendingCount += count;
+      if (group.dns_org === 'pending') dnsPendingCount += count;
+      if (group.dns_in === 'pending') dnsPendingCount += count;
+
+      if (group.whois_com === 'pending' && group.dns_com === 'nxdomain') whoisPendingCount += count;
+      if (group.whois_org === 'pending' && group.dns_org === 'nxdomain') whoisPendingCount += count;
+      if (group.whois_in === 'pending' && group.dns_in === 'nxdomain') whoisPendingCount += count;
+    }
+
+    // Calculate ETA (0.05 seconds per DNS loop, 5.0 seconds per WHOIS loop)
+    // Note: since DNS processes all 3 TLDs concurrently per word, the actual DNS time is less,
+    // but 0.05 per pending item is a safe upper bound.
+    const dnsSeconds = dnsPendingCount * 0.05;
+    const whoisSeconds = whoisPendingCount * (DELAY_MS / 1000);
+    const totalSeconds = Math.ceil(dnsSeconds + whoisSeconds);
+    
+    let etaString = "Done!";
+    if (totalSeconds > 0) {
+      if (totalSeconds > 86400) {
+        etaString = `${Math.floor(totalSeconds / 86400)} days ${Math.floor((totalSeconds % 86400) / 3600)} hrs`;
+      } else if (totalSeconds > 3600) {
+        etaString = `${Math.floor(totalSeconds / 3600)} hrs ${Math.floor((totalSeconds % 3600) / 60)} mins`;
+      } else if (totalSeconds > 60) {
+        etaString = `${Math.floor(totalSeconds / 60)} mins ${totalSeconds % 60} secs`;
+      } else {
+        etaString = `${totalSeconds} seconds`;
+      }
+    }
+    
+    result.eta = etaString;
+
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Stats Query Error: ' + err.message });
@@ -245,6 +327,8 @@ app.listen(PORT, () => {
 // -------------------------------------------------------------
 // WORKER LOGIC
 // -------------------------------------------------------------
+
+let pendingQueue = [];
 
 async function checkDns(domain) {
   try {
@@ -284,65 +368,79 @@ async function checkWhois(domain) {
 
 async function processNextDomain() {
   try {
-    // Find a word that has ANY pending operations
-    const pendingWord = await prisma.domainWord.findFirst({
-      where: {
-        OR: [
-          { dns_com: 'pending' }, { whois_com: 'pending' },
-          { dns_org: 'pending' }, { whois_org: 'pending' },
-          { dns_in: 'pending' }, { whois_in: 'pending' }
-        ]
-      }
-    });
+    if (pendingQueue.length === 0) {
+      console.log('Fetching next batch from database...');
+      pendingQueue = await prisma.domainWord.findMany({
+        where: {
+          OR: [
+            { dns_com: 'pending' }, { whois_com: 'pending' },
+            { dns_org: 'pending' }, { whois_org: 'pending' },
+            { dns_in: 'pending' }, { whois_in: 'pending' }
+          ]
+        },
+        take: 100,
+        orderBy: { id: 'asc' }
+      });
 
-    if (!pendingWord) {
-      console.log('No pending words found. Waiting before next check...');
-      setTimeout(processNextDomain, BATCH_WAIT_MS);
-      return;
+      if (pendingQueue.length === 0) {
+        console.log('No pending words found. Waiting before next check...');
+        setTimeout(processNextDomain, BATCH_WAIT_MS);
+        return;
+      }
     }
 
-    const { id, word } = pendingWord;
+    const wordObj = pendingQueue[0];
+    const { id, word } = wordObj;
     console.log(`\nProcessing word: ${word}`);
     let updatedData = {};
     let didWhois = false;
 
-    // --------------------------------------------------
-    // .COM PROCESSING PIPELINE
-    // --------------------------------------------------
-    if (pendingWord.dns_com === 'pending') {
-      const status = await checkDns(`${word}.com`);
-      updatedData.dns_com = status;
-      if (status === 'taken') updatedData.whois_com = 'skipped'; // Bypass WHOIS
-    } else if (pendingWord.whois_com === 'pending' && pendingWord.dns_com === 'nxdomain') {
-      const status = await checkWhois(`${word}.com`);
-      updatedData.whois_com = status;
-      didWhois = true;
+    // Fast DNS phase (can do all 3 simultaneously)
+    const dnsPromises = [];
+    if (wordObj.dns_com === 'pending') {
+      dnsPromises.push(checkDns(`${word}.com`).then(s => { 
+        updatedData.dns_com = s; wordObj.dns_com = s; 
+        if (s === 'taken') { updatedData.whois_com = 'skipped'; wordObj.whois_com = 'skipped'; } 
+      }));
+    }
+    if (wordObj.dns_org === 'pending') {
+      dnsPromises.push(checkDns(`${word}.org`).then(s => { 
+        updatedData.dns_org = s; wordObj.dns_org = s; 
+        if (s === 'taken') { updatedData.whois_org = 'skipped'; wordObj.whois_org = 'skipped'; } 
+      }));
+    }
+    if (wordObj.dns_in === 'pending') {
+      dnsPromises.push(checkDns(`${word}.in`).then(s => { 
+        updatedData.dns_in = s; wordObj.dns_in = s; 
+        if (s === 'taken') { updatedData.whois_in = 'skipped'; wordObj.whois_in = 'skipped'; } 
+      }));
     }
 
-    // --------------------------------------------------
-    // .ORG PROCESSING PIPELINE
-    // --------------------------------------------------
-    else if (pendingWord.dns_org === 'pending') {
-      const status = await checkDns(`${word}.org`);
-      updatedData.dns_org = status;
-      if (status === 'taken') updatedData.whois_org = 'skipped';
-    } else if (pendingWord.whois_org === 'pending' && pendingWord.dns_org === 'nxdomain') {
-      const status = await checkWhois(`${word}.org`);
-      updatedData.whois_org = status;
-      didWhois = true;
+    if (dnsPromises.length > 0) {
+      // Execute all pending DNS checks for this word in parallel
+      await Promise.all(dnsPromises);
+    } else {
+      // No DNS pending, do ONE WHOIS check (to respect rate limits)
+      if (wordObj.whois_com === 'pending' && wordObj.dns_com === 'nxdomain') {
+        const s = await checkWhois(`${word}.com`);
+        updatedData.whois_com = s; wordObj.whois_com = s; didWhois = true;
+      } else if (wordObj.whois_org === 'pending' && wordObj.dns_org === 'nxdomain') {
+        const s = await checkWhois(`${word}.org`);
+        updatedData.whois_org = s; wordObj.whois_org = s; didWhois = true;
+      } else if (wordObj.whois_in === 'pending' && wordObj.dns_in === 'nxdomain') {
+        const s = await checkWhois(`${word}.in`);
+        updatedData.whois_in = s; wordObj.whois_in = s; didWhois = true;
+      }
     }
 
-    // --------------------------------------------------
-    // .IN PROCESSING PIPELINE
-    // --------------------------------------------------
-    else if (pendingWord.dns_in === 'pending') {
-      const status = await checkDns(`${word}.in`);
-      updatedData.dns_in = status;
-      if (status === 'taken') updatedData.whois_in = 'skipped';
-    } else if (pendingWord.whois_in === 'pending' && pendingWord.dns_in === 'nxdomain') {
-      const status = await checkWhois(`${word}.in`);
-      updatedData.whois_in = status;
-      didWhois = true;
+    // Check if word is fully processed
+    const isDone = 
+      wordObj.dns_com !== 'pending' && wordObj.whois_com !== 'pending' &&
+      wordObj.dns_org !== 'pending' && wordObj.whois_org !== 'pending' &&
+      wordObj.dns_in !== 'pending' && wordObj.whois_in !== 'pending';
+
+    if (isDone) {
+      pendingQueue.shift(); // Remove from in-memory queue
     }
 
     // UPDATE DATABASE
@@ -364,6 +462,7 @@ async function processNextDomain() {
     }
   } catch (err) {
     console.error('Worker loop error:', err.message);
+    pendingQueue = []; // Clear queue to prevent infinite error loops on a corrupted row
     setTimeout(processNextDomain, BATCH_WAIT_MS);
   }
 }
