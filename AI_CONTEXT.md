@@ -21,12 +21,12 @@ If you are building a Node.js app that requires a backend server or a database (
    - The database connection string must connect through the Docker network: `postgres://admin:password@global_postgres:5432/orchestrator_db`.
 4. **Docker Compose Integration:**
    - Add the app as a new service inside the root `docker-compose.yml`.
-   - The `container_name` you choose is extremely important (e.g., `container_name: my_app`).
+   - The `container_name` you choose is extremely important (e.g., `container_name: my-new-app`).
    - The `build` path must point to the folder: `build: ./apps/my-new-app`.
 5. **Cloudflare Routing:**
    - Do NOT use Nginx for dynamic apps.
    - Because the Cloudflare Tunnel is on the same Docker network (`factory_net`), it can route traffic directly to the container's internal port.
-   - To link a domain to this app, the user simply goes to Cloudflare Zero Trust and points the Public Hostname to `http://<container_name>:<port>` (e.g., `http://my_app:3000`).
+   - To link a domain to this app, the user simply goes to Cloudflare Zero Trust and points the Public Hostname to `http://<container_name>:<port>` (e.g., `http://my-new-app:3000`).
 
 ### 2. Static Sites (HTML/CSS/JS)
 If you are building a pure frontend static site, the process is incredibly simple. We use a dynamic Nginx routing system. Do NOT create new containers for static sites.
