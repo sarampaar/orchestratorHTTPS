@@ -518,39 +518,38 @@ async function processNextDomain() {
       }
     }
 
-    const wordObj = pendingQueue[0];
-    const { id, word } = wordObj;
-    
-    let updatedData = {};
-    let delayMs = 50;
-
     if (currentTask.startsWith('dns_')) {
       const tld = currentTask.split('_')[1];
-      const status = await checkDns(`${word}.${tld}`);
-      updatedData[currentTask] = status;
-      if (status === 'taken') {
-        updatedData[`whois_${tld}`] = 'skipped';
-      }
-      delayMs = 50; // Max speed for DNS
+      const batchSize = Math.min(20, pendingQueue.length);
+      const batch = pendingQueue.splice(0, batchSize);
+      
+      const promises = batch.map(async (wordObj) => {
+        const { id, word } = wordObj;
+        const status = await checkDns(`${word}.${tld}`);
+        let data = { [currentTask]: status, last_checked: new Date() };
+        if (status === 'taken') {
+          data[`whois_${tld}`] = 'skipped';
+        }
+        await prisma.domainWord.update({ where: { id }, data });
+        console.log(`[${currentTask}] Processed ${word} ->`, status);
+      });
+      
+      await Promise.all(promises);
+      setTimeout(processNextDomain, 10); // Loop immediately
+      
     } else if (currentTask.startsWith('whois_')) {
+      const wordObj = pendingQueue.shift();
+      const { id, word } = wordObj;
       const tld = currentTask.split('_')[1];
+      
       const status = await checkWhois(`${word}.${tld}`);
-      updatedData[currentTask] = status;
-      delayMs = DELAY_MS; // Obey rate limits for WHOIS
+      let data = { [currentTask]: status, last_checked: new Date() };
+      
+      await prisma.domainWord.update({ where: { id }, data });
+      console.log(`[${currentTask}] Processed ${word} ->`, status);
+      
+      setTimeout(processNextDomain, DELAY_MS); // Obey rate limits for WHOIS
     }
-
-    // UPDATE DATABASE
-    updatedData.last_checked = new Date();
-    await prisma.domainWord.update({
-      where: { id },
-      data: updatedData
-    });
-    console.log(`[${currentTask}] Processed ${word} ->`, updatedData[currentTask]);
-
-    // Unconditionally remove from memory queue so we always advance
-    pendingQueue.shift();
-
-    setTimeout(processNextDomain, delayMs);
 
   } catch (err) {
     console.error('Worker loop error:', err.message);
