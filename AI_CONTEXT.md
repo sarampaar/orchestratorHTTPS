@@ -42,3 +42,20 @@ If you are building a pure frontend static site, the process is incredibly simpl
 All code changes, folder creations, and docker-compose updates are committed and pushed to the `main` branch. A GitHub Action (`sync-infra.yml`) automatically connects to the VPS, syncs the files, and restarts the Docker containers.
 
 **Always remember:** Docker container names are the internal DNS names used by Cloudflare Tunnels!
+
+---
+
+### 🔐 Available Secrets & Environment Variables
+When generating GitHub Actions workflows or Docker configurations, assume the following pre-configured secrets/variables are already available in the environment:
+
+**GitHub Secrets (For CI/CD Workflows):**
+- `GLOBAL_VPS_IP`: The public IP address of the VPS.
+- `GLOBAL_VPS_PORT`: The SSH port for the VPS.
+- `GLOBAL_SSH_KEY`: The SSH private key used for authentication.
+- `CF_TUNNEL_TOKEN`: The Cloudflare Zero Trust tunnel authentication token.
+- `POSTGRES_USER`: The admin username for the database.
+- `POSTGRES_PASSWORD`: The admin password for the database.
+
+**Docker Compose Variables:**
+- `POSTGRES_USER` and `POSTGRES_PASSWORD` are automatically passed into the environment when the VPS executes `docker-compose up`.
+- You should reference them safely in `docker-compose.yml` like this: `${POSTGRES_USER:-admin}` and `${POSTGRES_PASSWORD:-securepassword123}`.
