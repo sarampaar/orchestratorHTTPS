@@ -154,7 +154,13 @@ app.get('/', (req, res) => {
         <div class="card">
           <h2>.com WHOIS</h2>
           <div class="stat-row pending"><span>Pending:</span> <span id="whois-com-pending">...</span></div>
-          <div class="stat-row available"><span>Available:</span> <span id="whois-com-avail">...</span></div>
+          <div class="stat-row available">
+            <span>Available:</span> 
+            <span>
+              <span id="whois-com-avail">...</span>
+              <a href="#" onclick="showAvailable('com'); return false;" style="font-size: 0.8rem; color: #38bdf8; margin-left: 0.5rem; text-decoration: none;">[View]</a>
+            </span>
+          </div>
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-com-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-com-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-com-err">...</span></div>
@@ -170,7 +176,13 @@ app.get('/', (req, res) => {
         <div class="card">
           <h2>.org WHOIS</h2>
           <div class="stat-row pending"><span>Pending:</span> <span id="whois-org-pending">...</span></div>
-          <div class="stat-row available"><span>Available:</span> <span id="whois-org-avail">...</span></div>
+          <div class="stat-row available">
+            <span>Available:</span> 
+            <span>
+              <span id="whois-org-avail">...</span>
+              <a href="#" onclick="showAvailable('org'); return false;" style="font-size: 0.8rem; color: #38bdf8; margin-left: 0.5rem; text-decoration: none;">[View]</a>
+            </span>
+          </div>
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-org-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-org-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-org-err">...</span></div>
@@ -186,7 +198,13 @@ app.get('/', (req, res) => {
         <div class="card">
           <h2>.in WHOIS</h2>
           <div class="stat-row pending"><span>Pending:</span> <span id="whois-in-pending">...</span></div>
-          <div class="stat-row available"><span>Available:</span> <span id="whois-in-avail">...</span></div>
+          <div class="stat-row available">
+            <span>Available:</span> 
+            <span>
+              <span id="whois-in-avail">...</span>
+              <a href="#" onclick="showAvailable('in'); return false;" style="font-size: 0.8rem; color: #38bdf8; margin-left: 0.5rem; text-decoration: none;">[View]</a>
+            </span>
+          </div>
           <div class="stat-row taken"><span>Taken:</span> <span id="whois-in-taken">...</span></div>
           <div class="stat-row"><span>Skipped:</span> <span id="whois-in-skipped">...</span></div>
           <div class="stat-row"><span>Errors:</span> <span id="whois-in-err">...</span></div>
@@ -241,6 +259,18 @@ app.get('/', (req, res) => {
             alert('Generation started in the background!');
             fetchStats();
           } catch(e) { alert('Failed to start generation'); }
+        }
+
+        async function showAvailable(tld) {
+          try {
+            const res = await fetch('/api/available?tld=' + tld);
+            const data = await res.json();
+            if (data.error) return alert(data.error);
+            if (data.length === 0) return alert('No available domains yet.');
+            alert(\`✅ Available .\${tld} domains:\\n\\n\` + data.join('\\n'));
+          } catch(e) {
+            alert('Failed to load available domains');
+          }
         }
 
         async function fetchStats() {
@@ -434,6 +464,26 @@ app.get('/api/stats', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Stats Query Error: ' + err.message });
+  }
+});
+
+app.get('/api/available', async (req, res) => {
+  try {
+    const { tld } = req.query;
+    if (!['com', 'org', 'in'].includes(tld)) {
+      return res.status(400).json({ error: 'Invalid TLD' });
+    }
+    const column = `whois_${tld}`;
+    const domains = await prisma.domainWord.findMany({
+      where: { [column]: 'available' },
+      select: { word: true },
+      orderBy: { word: 'asc' }
+    });
+    
+    res.json(domains.map(d => `${d.word}.${tld}`));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Available Query Error: ' + err.message });
   }
 });
 
