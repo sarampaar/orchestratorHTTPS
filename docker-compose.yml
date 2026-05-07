@@ -58,6 +58,32 @@ services:
     networks:
       - factory_net
 
+  agentic_ai_llama_server:
+    container_name: agentic_ai_llama_server
+    image: ghcr.io/ggml-org/llama.cpp:server
+    restart: always
+    volumes:
+      - ./apps/agentic_ai/models:/models
+    command: >
+      --model /models/your-model-file.gguf
+      --host 0.0.0.0
+      --port 8080
+      --ctx-size 2048
+    networks:
+      - factory_net
+
+  agentic_ai_webui:
+    container_name: agentic_ai_webui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: always
+    environment:
+      - OPENAI_API_BASE_URL=http://agentic_ai_llama_server:8080/v1
+      - OPENAI_API_KEY=dummy-key
+    volumes:
+      - ./apps/agentic_ai/webui-data:/app/backend/data
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge
