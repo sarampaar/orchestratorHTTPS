@@ -1,6 +1,6 @@
 services:
   tunnel:
-    container_name: tunnel  # Fixed name for terminal commands
+    container_name: tunnel # Fixed name for terminal commands
     image: cloudflare/cloudflared:latest
     restart: always
     environment:
@@ -10,7 +10,7 @@ services:
       - factory_net
 
   global_nginx:
-    container_name: global_nginx  # Fixed name for Cloudflare Service URL
+    container_name: global_nginx # Fixed name for Cloudflare Service URL
     image: nginx:alpine
     restart: always
     volumes:
@@ -65,10 +65,7 @@ services:
     volumes:
       - ./apps/agentic_ai/models:/models
     command: >
-      --model /models/qwen1_5-7b-chat-q4_k_m.gguf
-      --host 0.0.0.0
-      --port 8080
-      --ctx-size 2048
+      --model /models/Qwen2.5-Math-7B-Instruct-Q4_K_M.gguf --host 0.0.0.0 --port 8080 --ctx-size 2048
     networks:
       - factory_net
 
