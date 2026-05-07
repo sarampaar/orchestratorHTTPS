@@ -34,10 +34,20 @@ You must download the model **directly on the VPS** using SSH:
    ```
 3. Use `wget` to download the model directly from HuggingFace to the VPS. For example, to download the Qwen 1.5 7B model:
    ```bash
-   wget "https://huggingface.co/Qwen/Qwen1.5-7B-Chat-GGUF/resolve/main/qwen1_5-7b-chat-q4_k_m.gguf" -O your-model-file.gguf
+   wget "https://huggingface.co/Qwen/Qwen1.5-7B-Chat-GGUF/resolve/main/qwen1_5-7b-chat-q4_k_m.gguf"
    ```
-*(Note: If you download a different model, make sure it is named `your-model-file.gguf` or update the `docker-compose.yml` to match the new filename).*
-### Step B: Deployment Process
+
+### Step B: How to Switch Models
+You can download as many `.gguf` files into the `models/` folder as you have hard drive space for. 
+However, the `llama-server` only runs **one model at a time** to save RAM. 
+To tell the server which model to run:
+1. Open the root `docker-compose.yml` file in your editor.
+2. Scroll down to the `agentic_ai_llama_server` section.
+3. Change the filename in the `--model` command to match the file you want to use:
+   `--model /models/new_model_name_here.gguf`
+4. Commit and push your changes, then run the `ai-infra.yml` workflow to restart the AI with the new model.
+
+### Step C: Deployment Process
 This repository follows an automated deployment process. 
 1. Since the `agentic_ai_llama_server` and `agentic_ai_webui` services have been added to the root `docker-compose.yml`, they will be deployed automatically by your GitHub Action (`sync-infra.yml`) when you commit and push these changes.
 2. Ensure you have SSH'd into the VPS and downloaded your `.gguf` model directly into the `apps/agentic_ai/models/` directory BEFORE pushing, otherwise the llama container will crash on boot looking for the model.
