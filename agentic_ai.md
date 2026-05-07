@@ -40,12 +40,11 @@ You must download the model **directly on the VPS** using SSH:
 ### Step B: How to Switch Models
 You can download as many `.gguf` files into the `models/` folder as you have hard drive space for. 
 However, the `llama-server` only runs **one model at a time** to save RAM. 
-To tell the server which model to run:
-1. Open the root `docker-compose.yml` file in your editor.
-2. Scroll down to the `agentic_ai_llama_server` section.
-3. Change the filename in the `--model` command to match the file you want to use:
-   `--model /models/new_model_name_here.gguf`
-4. Commit and push your changes, then run the `ai-infra.yml` workflow to restart the AI with the new model.
+To tell the server which model to run, follow this 3-step process:
+
+1. **Download the new model:** SSH into your VPS and use `wget` to download your new `.gguf` file into the `~/orchestrator/apps/agentic_ai/models/` folder.
+2. **Update the code:** Open `docker-compose.yml` in your editor, find the `agentic_ai_llama_server` section, and change the `--model` command to match your new filename (e.g., `--model /models/Qwen2.5-Math-7B-Instruct-Q4_K_M.gguf`). Commit and push this change to GitHub.
+3. **Restart the AI:** Go to your GitHub Actions tab and click **Run workflow** on the `Sync AI Infrastructure` (`ai-infra.yml`) action. The server will automatically restart and load your new model!
 
 ### Step C: Deployment Process
 This repository follows an automated deployment process. 
