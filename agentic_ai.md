@@ -27,7 +27,7 @@ You specified a maximum allowance of 8GB RAM. To avoid OOM (Out of Memory) crash
 
 You must download the model **directly on the VPS** using SSH:
 1. SSH into your VPS (`ssh -p 2256 root@your_vps_ip`).
-2. Navigate to the models folder (this folder is created automatically when you push your code, or you can create it manually):
+2. Manually create the required folder structure on your VPS and navigate into it:
    ```bash
    mkdir -p ~/orchestrator/apps/agentic_ai/models
    cd ~/orchestrator/apps/agentic_ai/models
