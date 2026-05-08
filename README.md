@@ -38,6 +38,7 @@ chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
 
 # 4. Retrieve Private Key
+cat id_rsa_org    ##---file is sitting directly in root
 cat ~/.ssh/id_github_actions
 ```
 *Securely copy the entire output block (including the `BEGIN` and `END` headers) to save for the next step.*
