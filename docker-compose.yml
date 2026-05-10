@@ -8,6 +8,7 @@ services:
     command: tunnel run
     networks:
       - factory_net
+      - mail-net
 
   global_nginx:
     container_name: global_nginx # Fixed name for Cloudflare Service URL
@@ -84,3 +85,5 @@ services:
 networks:
   factory_net:
     driver: bridge
+  mail-net:
+    external: true

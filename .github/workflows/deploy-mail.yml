@@ -1,0 +1,66 @@
+name: Deploy Mail Server
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.GLOBAL_VPS_IP }}" ]; then
+            echo "ERROR: GLOBAL_VPS_IP secret is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.GLOBAL_SSH_KEY }}" ]; then
+            echo "ERROR: GLOBAL_SSH_KEY secret is not set."
+            exit 1
+          fi
+
+      - name: Save SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo -e "${{ secrets.GLOBAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        shell: bash
+
+      - name: Prep Mail Server Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP }}
+          username: root
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
+          port: 2256
+          script: |
+            mkdir -p ~/orchestrator/apps/mail-server
+
+      - name: Sync Mail Server Compose
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP }}
+          username: root
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
+          port: 2256
+          source: "apps/mail-server/docker-compose.yml"
+          target: "~/orchestrator"
+
+      - name: Deploy Mail Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP }}
+          username: root
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY }}
+          port: 2256
+          script: |
+            # Ensure network exists
+            docker network create mail-net || true
+            
+            # Start mail server
+            cd ~/orchestrator/apps/mail-server
+            docker compose up -d --build --force-recreate
+            
+            # Restart main tunnel if it's connected to mail-net to ensure it sees the new containers
+            cd ~/orchestrator
+            docker compose up -d tunnel
