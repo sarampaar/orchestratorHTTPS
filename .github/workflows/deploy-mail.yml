@@ -63,4 +63,7 @@ jobs:
             
             # Restart main tunnel if it's connected to mail-net to ensure it sees the new containers
             cd ~/orchestrator
+            export CF_TUNNEL_TOKEN=${{ secrets.CF_TUNNEL_TOKEN }}
+            export POSTGRES_USER=${{ secrets.POSTGRES_USER || 'admin' }}
+            export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'securepassword123' }}
             docker compose up -d tunnel
