@@ -120,10 +120,8 @@ services:
     restart: unless-stopped
     # Cloudflare Tunnel will access this internally via http://snappymail:8888
     volumes:
-      - ./snappymail-data:/snappymail/data
+      - ./snappymail-data:/var/lib/snappymail
     environment:
-      - SNAPPYMAIL_ADMIN_USER=admin
-      - SNAPPYMAIL_ADMIN_PASS=ChangeMeImmediately123!
       - TZ=UTC
     networks:
       - mail-net
@@ -137,14 +135,30 @@ networks:
 
 1.  **Create Docker Network:** Run `docker network create mail-net` on your VPS. This allows Cloudflare to talk to your containers directly by name.
 2.  **Verify Port 25:** Ensure your VPS provider has unblocked port 25.
-3.  **Run the Container:** Navigate to the folder and run `docker compose up -d`.
-4.  **Get Admin Password:** Run `docker logs stalwart-mail | grep password` to get your initial Stalwart admin password.
-5.  **Setup Cloudflare Tunnels (Zero Trust):**
-    *   **Admin Panel:** Route `mailadmin.yourdomain.com` to `http://stalwart-mail:8080` (The UI itself will be located at `https://mailadmin.yourdomain.com/admin`).
-    *   **Webmail:** Route `webmail.yourdomain.com` to `http://snappymail:8888`.
-6.  **Configure:** 
-    *   Log into Stalwart Admin to add your domains and generate DKIM keys.
-    *   Log into SnappyMail Admin (`webmail.yourdomain.com/?admin`) using the credentials in the compose file to link it to your IMAP/SMTP server (`stalwart-mail`).
+3.  **Create Folders & Set Permissions:** Stalwart runs as a secure, non-root user (UID 2000). You must create the folders and give it ownership so it can save your configuration:
+    ```bash
+    mkdir -p data etc
+    sudo chown -R 2000:2000 data etc
+    ```
+4.  **Run the Container:** Run `docker compose up -d` in the folder.
+5.  **Get Temporary Password:** Run `docker logs stalwart-mail | grep password` to get your temporary setup password.
+6.  **Setup Cloudflare Tunnels (Zero Trust):**
+    *   **Admin Panel:** Route `mailadmin.yourdomain.com` to `http://stalwart-mail:8080`
+    *   **Webmail:** Route `webmail.yourdomain.com` to `http://snappymail:8888`
+7.  **Run Setup Wizard:** 
+    *   Go to `https://mailadmin.yourdomain.com/admin` (You must append `/admin` to see the UI).
+    *   Log in with username `admin` and the temporary password from the logs.
+    *   Complete the 5-step setup wizard. It will generate your **real** admin email and permanent password at the end.
+8.  **Configure Webmail (SnappyMail):**
+    *   To log into the SnappyMail Admin panel, you need the auto-generated password. Run this command on your VPS to get it:
+        ```bash
+        cat ~/orchestrator/apps/mail-server/snappymail-data/_data_/_default_/admin_password.txt
+        ```
+    *   Go to: `https://webmail.yourdomain.com/?admin`
+    *   **Username:** `admin`
+    *   **Password:** *(Paste the password from the command above)*
+    *   **TOTP Code:** *(Leave this completely blank!)*
+    *   Once inside, immediately go to **Security** to change the admin password, then link SnappyMail to your IMAP/SMTP server (`stalwart-mail`).
 
 ---
 

@@ -31,10 +31,8 @@ services:
     restart: unless-stopped
     # Cloudflare Tunnel will access this internally via http://snappymail:8888
     volumes:
-      - ./snappymail-data:/snappymail/data
+      - ./snappymail-data:/var/lib/snappymail
     environment:
-      - SNAPPYMAIL_ADMIN_USER=admin
-      - SNAPPYMAIL_ADMIN_PASS=ChangeMeImmediately123!
       - TZ=UTC
     networks:
       - mail-net
