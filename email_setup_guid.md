@@ -107,19 +107,20 @@ services:
       # Admin UI (Exposed locally, but Cloudflare can access directly via container name)
       - "127.0.0.1:8080:8080"
     volumes:
-      - ./data:/opt/stalwart-mail
+      - ./etc:/etc/stalwart
+      - ./data:/var/lib/stalwart
     environment:
       - TZ=UTC # Adjust to your timezone if needed
     networks:
       - mail-net
 
   snappymail:
-    image: itefixnet/snappymail:latest
+    image: djmaze/snappymail:latest
     container_name: snappymail
     restart: unless-stopped
-    # Cloudflare Tunnel will access this internally via http://snappymail:80
+    # Cloudflare Tunnel will access this internally via http://snappymail:8888
     volumes:
-      - ./snappymail-data:/var/www/html/data
+      - ./snappymail-data:/snappymail/data
     environment:
       - SNAPPYMAIL_ADMIN_USER=admin
       - SNAPPYMAIL_ADMIN_PASS=ChangeMeImmediately123!
@@ -139,8 +140,8 @@ networks:
 3.  **Run the Container:** Navigate to the folder and run `docker compose up -d`.
 4.  **Get Admin Password:** Run `docker logs stalwart-mail | grep password` to get your initial Stalwart admin password.
 5.  **Setup Cloudflare Tunnels (Zero Trust):**
-    *   **Admin Panel:** Route `mailadmin.yourdomain.com` to `http://stalwart-mail:8080` (Make sure your `cloudflared` tunnel container is *also* connected to the `mail-net` network).
-    *   **Webmail:** Route `webmail.yourdomain.com` to `http://snappymail:80`.
+    *   **Admin Panel:** Route `mailadmin.yourdomain.com` to `http://stalwart-mail:8080` (The UI itself will be located at `https://mailadmin.yourdomain.com/admin`).
+    *   **Webmail:** Route `webmail.yourdomain.com` to `http://snappymail:8888`.
 6.  **Configure:** 
     *   Log into Stalwart Admin to add your domains and generate DKIM keys.
     *   Log into SnappyMail Admin (`webmail.yourdomain.com/?admin`) using the credentials in the compose file to link it to your IMAP/SMTP server (`stalwart-mail`).

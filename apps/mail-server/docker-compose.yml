@@ -18,19 +18,20 @@ services:
       # Admin UI (Exposed locally, but Cloudflare can access directly via container name)
       - "127.0.0.1:8080:8080"
     volumes:
-      - ./data:/opt/stalwart-mail
+      - ./etc:/etc/stalwart
+      - ./data:/var/lib/stalwart
     environment:
       - TZ=UTC # Adjust to your timezone if needed
     networks:
       - mail-net
 
   snappymail:
-    image: itefixnet/snappymail:latest
+    image: djmaze/snappymail:latest
     container_name: snappymail
     restart: unless-stopped
-    # Cloudflare Tunnel will access this internally via http://snappymail:80
+    # Cloudflare Tunnel will access this internally via http://snappymail:8888
     volumes:
-      - ./snappymail-data:/var/www/html/data
+      - ./snappymail-data:/snappymail/data
     environment:
       - SNAPPYMAIL_ADMIN_USER=admin
       - SNAPPYMAIL_ADMIN_PASS=ChangeMeImmediately123!
