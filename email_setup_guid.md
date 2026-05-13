@@ -145,10 +145,11 @@ networks:
 6.  **Setup Cloudflare Tunnels (Zero Trust):**
     *   **Admin Panel:** Route `mailadmin.yourdomain.com` to `http://stalwart-mail:8080`
     *   **Webmail:** Route `webmail.yourdomain.com` to `http://snappymail:8888`
-7.  **Run Setup Wizard:** 
+7.  **Run Setup Wizard (Bootstrap Mode):** 
     *   Go to `https://mailadmin.yourdomain.com/admin` (You must append `/admin` to see the UI).
     *   Log in with username `admin` and the temporary password from the logs.
-    *   Complete the 5-step setup wizard. It will generate your **real** admin email and permanent password at the end.
+    *   Complete all 5 steps of the setup wizard. During this process, you will create your **Master Admin email address** (e.g., `admin@yourdomain.com`) and a permanent password.
+    *   **CRITICAL:** Once the 5 steps are finished, Stalwart restarts in "Production Mode". The temporary `admin` account is permanently deleted. If you need to log back into the Admin Panel later, you MUST use your full Master Admin email address and the permanent password.
 8.  **Configure Webmail (SnappyMail):**
     *   To log into the SnappyMail Admin panel, you need the auto-generated password. Run this command on your VPS to get it:
         ```bash
@@ -158,7 +159,19 @@ networks:
     *   **Username:** `admin`
     *   **Password:** *(Paste the password from the command above)*
     *   **TOTP Code:** *(Leave this completely blank!)*
-    *   Once inside, immediately go to **Security** to change the admin password, then link SnappyMail to your IMAP/SMTP server (`stalwart-mail`).
+    *   Once inside, immediately go to **Security** to change the admin password.
+    *   Navigate to the **Domains** section to link SnappyMail to your IMAP/SMTP server with the following settings:
+        *   **Whitelist:** `@aeiou.in`
+        *   **IMAP Server:** `stalwart-mail`
+            *   **Port:** `993`
+            *   **Security:** `SSL/TLS`
+            *   **Timeout:** `300`
+            *   *(Ensure ALL checkboxes in this section are un checked)*
+        *   **SMTP Server:** `stalwart-mail`
+            *   **Port:** `465`
+            *   **Security:** `SSL/TLS`
+            *   **Timeout:** `60`
+            *   *(Ensure ALL checkboxes in this section are un checked)*
 
 ---
 
@@ -166,9 +179,10 @@ networks:
 
 Because we split the backend (server) from the frontend (webmail), here is how your daily workflow will look:
 
-### 1. Creating Email Accounts (Stalwart Admin)
-You will create all of your email addresses (e.g., `admin@yourdomain.com`, `contactus@...`) inside the **Stalwart Admin Panel** (`mailadmin.yourdomain.com`). 
-*   Navigate to **Directory > Accounts** to create users and assign their passwords. 
+### 1. Creating Additional Email Accounts (Stalwart Admin)
+Your Master Admin account was created during the setup wizard. You can now create "N" number of additional email addresses (e.g., `contactus@...`, `support@...`) inside the **Stalwart Admin Panel** (`mailadmin.yourdomain.com`). 
+*   Log in using your **Master Admin email address**.
+*   Navigate to **Directory > Accounts** to create new users and assign their passwords. 
 *   Stalwart is your central "control room" for domains, user accounts, routing, and security.
 
 ### 2. Reading and Sending Emails (SnappyMail Webmail)

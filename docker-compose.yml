@@ -113,6 +113,16 @@ services:
   #   networks:
   #     - factory_net
 
+  node_postgresql:
+    container_name: node_postgresql
+    build: ./apps/node_postgresql
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-securepassword123}@global_postgres:5432/orchestrator_db?schema=node_postgresql
+      - PORT=3000
+    networks:
+      - factory_net
+
 networks:
   factory_net:
     driver: bridge
