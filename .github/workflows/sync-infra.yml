@@ -82,6 +82,9 @@ jobs:
             docker logs tunnel --tail 20
             docker exec global_nginx nginx -s reload
             
+            echo "--- Updating Domain Checker Database Schema ---"
+            docker exec domain_checker npx prisma db push --accept-data-loss
+            
             echo "--- Generating Static Sites via Node SSG ---"
             export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@global_postgres:5432/orchestrator_db"
             docker run --rm \

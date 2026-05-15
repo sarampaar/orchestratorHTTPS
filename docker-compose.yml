@@ -67,14 +67,7 @@ services:
       - ./apps/agentic_ai/models:/models
     # Updated command for 8192 context and CPU optimization
     command: >
-      --model /models/Qwen2.5-Math-7B-Instruct-Q4_K_M.gguf
-      --host 0.0.0.0
-      --port 8080
-      --ctx-size 8192
-      --threads 6
-      --batch-size 256
-      --cache-type-k q8_0
-      --no-mmap
+      --model /models/Qwen2.5-Math-7B-Instruct-Q4_K_M.gguf --host 0.0.0.0 --port 8080 --ctx-size 8192 --threads 6 --batch-size 256 --cache-type-k q8_0 --no-mmap
     networks:
       - factory_net
 

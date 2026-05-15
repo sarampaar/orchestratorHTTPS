@@ -32,6 +32,44 @@ const DELAY_MS = parseInt(process.env.DELAY_MS || '5000', 10);
 const BATCH_WAIT_MS = 10000;
 
 // -------------------------------------------------------------
+// HEURISTIC SCORING ENGINE (4OrgRank)
+// -------------------------------------------------------------
+function calculateOrgRank(word) {
+  let score = 0;
+  word = word.toLowerCase();
+
+  // Module 1: Linguistic Patterns & Phonetics (Max 20)
+  let mod1 = 5;
+  if (/^([a-z]{2})\1$/.test(word)) mod1 = 20; // Symmetrical (e.g., dodo)
+  else if (/^[bcdfghjklmnpqrstvwxyz][aeiouy][bcdfghjklmnpqrstvwxyz][aeiouy]$/.test(word)) mod1 = 15; // CVCV
+  else if (/[aeiouy]{1,2}/.test(word) && !/[bcdfghjklmnpqrstvwxyz]{3}/.test(word)) mod1 = 10; // Blended, no awkward clusters
+
+  // Module 2: Market Demand & Industry Vertical (Max 20)
+  let mod2 = 5;
+  const premiumRoots = ['tech', 'coin', 'gold', 'meta', 'porn', 'care', 'auto', 'bank', 'host', 'shop', 'news', 'chat', 'code', 'data', 'game', 'food', 'home', 'life', 'love', 'mind', 'play', 'star', 'time', 'work', 'health', 'med'];
+  if (premiumRoots.includes(word)) mod2 = 20;
+  else if (premiumRoots.some(root => word.includes(root))) mod2 = 15;
+
+  // Module 3: Authority, Acronyms (Max 20)
+  let mod3 = 5;
+  const acronyms = ['drdo', 'nasa', 'nato', 'who', 'fbi', 'cia', 'mit', 'ieee', 'w3c'];
+  if (acronyms.includes(word)) mod3 = 20;
+  else if (/^[a-z]{4}$/.test(word)) mod3 = 10; // Fallback for 4 letter words
+
+  // Module 4: Scarcity, Length & TLD Synergy (Max 20)
+  let mod4 = 20; // All are 4 letters
+  if (/[qxzjv]/.test(word)) mod4 = 15; // Penalize for hard letters
+
+  // Module 5: Brand Spillover (Max 20)
+  let mod5 = 5;
+  const brands = ['goog', 'amzn', 'uber', 'meta', 'appl', 'msft', 'nike', 'sony', 'ford', 'audi', 'bmw', 'ibm'];
+  if (brands.includes(word)) mod5 = 20;
+
+  score = mod1 + mod2 + mod3 + mod4 + mod5;
+  return score;
+}
+
+// -------------------------------------------------------------
 // EXPRESS DASHBOARD SETUP
 // -------------------------------------------------------------
 app.use(express.json());
@@ -218,6 +256,23 @@ app.get('/', (req, res) => {
         </div>
       </div>
       
+      <h2 class="section-title">Phase 3: 4OrgRank Intelligence</h2>
+      <div class="grid" id="rank-container">
+        <div class="card" style="grid-column: 1 / -1; align-items: center;">
+          <h2>.org AI Ranking</h2>
+          <div class="stat-row pending" style="width: 300px;"><span>Pending (Available .orgs):</span> <span id="rank-org-pending">...</span></div>
+          <div class="stat-row available" style="width: 300px;"><span>Ranked & Scored:</span> <span id="rank-org-done">...</span></div>
+          <div class="stat-row" style="width: 300px;"><span>Errors:</span> <span id="rank-org-err">...</span></div>
+          <div class="card-actions" style="width: 300px;">
+            <button class="success" onclick="control('start', 'rank_org')">▶ Start Ranking</button>
+            <div class="row-btns">
+              <button class="warning" onclick="control('reset', 'rank_org')">↻ Reset</button>
+            </div>
+            <a href="/ranked-orgs" style="margin-top: 1rem; text-align: center; color: #38bdf8; text-decoration: none; padding: 0.8rem; border: 1px solid #38bdf8; border-radius: 0.5rem; transition: background 0.2s;">View Ranked Domains Dashboard ➔</a>
+          </div>
+        </div>
+      </div>
+      
       <div class="global-actions">
         <select id="gen-length">
           <option value="2">2 Letters</option>
@@ -305,11 +360,106 @@ app.get('/', (req, res) => {
               document.getElementById('whois-'+tld+'-skipped').innerText = data.whois[tld].skipped || 0;
               document.getElementById('whois-'+tld+'-err').innerText = data.whois[tld].error || 0;
             });
+
+            if (data.rank) {
+              document.getElementById('rank-org-pending').innerText = data.rank.pending || 0;
+              document.getElementById('rank-org-done').innerText = data.rank.done || 0;
+              document.getElementById('rank-org-err').innerText = data.rank.error || 0;
+            }
           } catch (e) { console.error('Failed to fetch stats'); }
         }
         
         fetchStats();
         setInterval(fetchStats, 5000);
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+app.get('/ranked-orgs', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Ranked .ORG Domains (4OrgRank)</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; margin: 0; }
+        h1 { color: #38bdf8; text-align: center; margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 800; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 2rem; }
+        table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; background: rgba(255,255,255,0.02); border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        th, td { padding: 1.2rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(255,255,255,0.05); color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        tr:hover { background: rgba(255,255,255,0.05); }
+        tr:last-child td { border-bottom: none; }
+        .rank-badge { background: linear-gradient(135deg, #38bdf8, #818cf8); color: #0f172a; padding: 0.3rem 0.8rem; border-radius: 2rem; font-weight: 800; font-size: 0.9rem; display: inline-block; }
+        .domain-name { font-size: 1.2rem; font-weight: 600; color: #f8fafc; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 2rem; }
+        button { background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; padding: 0.8rem 1.5rem; border-radius: 0.5rem; cursor: pointer; color: #38bdf8; font-weight: 600; transition: all 0.2s; }
+        button:hover:not(:disabled) { background: #38bdf8; color: #0f172a; }
+        button:disabled { border-color: rgba(255,255,255,0.1); color: #64748b; cursor: not-allowed; background: transparent; }
+        a.back { color: #94a3b8; text-decoration: none; display: inline-block; margin-bottom: 1rem; transition: color 0.2s; }
+        a.back:hover { color: #f8fafc; }
+      </style>
+    </head>
+    <body>
+      <div style="max-width: 800px; margin: 0 auto;">
+        <a class="back" href="/">← Back to Dashboard</a>
+      </div>
+      <h1>Top Ranked .ORG Domains</h1>
+      <p class="subtitle">Evaluated by 4OrgRank Intelligence Module</p>
+      
+      <table id="rankTable">
+        <thead>
+          <tr>
+            <th style="width: 70%;">Domain Name</th>
+            <th style="width: 30%;">4OrgRank Score</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      
+      <div class="pagination">
+        <button id="prevBtn" onclick="changePage(-1)">Previous</button>
+        <span id="pageInfo" style="font-weight: 600; color: #94a3b8;">Page 1</span>
+        <button id="nextBtn" onclick="changePage(1)">Next</button>
+      </div>
+      
+      <script>
+        let currentPage = 1;
+        async function loadPage(page) {
+          try {
+            const res = await fetch('/api/ranked-orgs?page=' + page);
+            const data = await res.json();
+            const tbody = document.querySelector('#rankTable tbody');
+            tbody.innerHTML = '';
+            
+            if (data.domains.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: #64748b; padding: 3rem;">No ranked domains found. Start the ranking job from the dashboard.</td></tr>';
+            } else {
+              data.domains.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = \`
+                  <td><span class="domain-name">\${d.word}.org</span></td>
+                  <td><span class="rank-badge">\${d.org_rank} / 100</span></td>
+                \`;
+                tbody.appendChild(tr);
+              });
+            }
+            
+            document.getElementById('pageInfo').innerText = \`Page \${data.page} of \${data.totalPages || 1} (Total: \${data.total})\`;
+            document.getElementById('prevBtn').disabled = data.page <= 1;
+            document.getElementById('nextBtn').disabled = data.page >= (data.totalPages || 1);
+            currentPage = data.page;
+          } catch (e) {
+            alert('Failed to load ranked domains.');
+          }
+        }
+        function changePage(delta) { loadPage(currentPage + delta); }
+        loadPage(1);
       </script>
     </body>
     </html>
@@ -340,11 +490,15 @@ app.post('/api/control', async (req, res) => {
     }
 
     if (action === 'reset') {
-      const tld = task.split('_')[1];
-      if (task.startsWith('dns_')) {
-        await prisma.domainWord.updateMany({ data: { [task]: 'pending', [`whois_${tld}`]: 'pending' } });
+      if (task === 'rank_org') {
+        await prisma.domainWord.updateMany({ where: { whois_org: 'available' }, data: { rank_status: 'pending', org_rank: null } });
       } else {
-        await prisma.domainWord.updateMany({ data: { [task]: 'pending' } });
+        const tld = task.split('_')[1];
+        if (task.startsWith('dns_')) {
+          await prisma.domainWord.updateMany({ data: { [task]: 'pending', [`whois_${tld}`]: 'pending' } });
+        } else {
+          await prisma.domainWord.updateMany({ data: { [task]: 'pending' } });
+        }
       }
       return res.json({ message: `Reset ${task}` });
     }
@@ -460,6 +614,17 @@ app.get('/api/stats', async (req, res) => {
     
     result.eta = etaString;
 
+    // Add rank_org stats
+    const rankStats = await prisma.domainWord.groupBy({
+      by: ['rank_status'],
+      where: { whois_org: 'available' },
+      _count: true
+    });
+    result.rank = { pending: 0, done: 0, error: 0 };
+    rankStats.forEach(g => {
+      if (g.rank_status) result.rank[g.rank_status] = g._count;
+    });
+
     res.json(result);
   } catch (err) {
     console.error(err);
@@ -484,6 +649,31 @@ app.get('/api/available', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Available Query Error: ' + err.message });
+  }
+});
+
+app.get('/api/ranked-orgs', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 100;
+    const offset = (page - 1) * limit;
+
+    const total = await prisma.domainWord.count({
+      where: { whois_org: 'available', org_rank: { not: null } }
+    });
+
+    const domains = await prisma.domainWord.findMany({
+      where: { whois_org: 'available', org_rank: { not: null } },
+      orderBy: { org_rank: 'desc' },
+      skip: offset,
+      take: limit,
+      select: { word: true, org_rank: true }
+    });
+
+    res.json({ total, page, totalPages: Math.ceil(total / limit), domains });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Rank Query Error: ' + err.message });
   }
 });
 
@@ -551,6 +741,9 @@ async function processNextDomain() {
         const tld = currentTask.split('_')[1];
         whereClause[currentTask] = 'pending';
         whereClause[`dns_${tld}`] = 'nxdomain';
+      } else if (currentTask === 'rank_org') {
+        whereClause.whois_org = 'available';
+        whereClause.rank_status = 'pending';
       }
 
       pendingQueue = await prisma.domainWord.findMany({
@@ -599,6 +792,22 @@ async function processNextDomain() {
       console.log(`[${currentTask}] Processed ${word} ->`, status);
       
       setTimeout(processNextDomain, DELAY_MS); // Obey rate limits for WHOIS
+    } else if (currentTask === 'rank_org') {
+      const batchSize = Math.min(100, pendingQueue.length);
+      const batch = pendingQueue.splice(0, batchSize);
+      
+      const promises = batch.map(async (wordObj) => {
+        const { id, word } = wordObj;
+        const score = calculateOrgRank(word);
+        await prisma.domainWord.update({ 
+          where: { id }, 
+          data: { org_rank: score, rank_status: 'done' } 
+        });
+        console.log(`[rank_org] Scored ${word}.org ->`, score);
+      });
+      
+      await Promise.all(promises);
+      setTimeout(processNextDomain, 10);
     }
 
   } catch (err) {

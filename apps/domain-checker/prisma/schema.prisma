@@ -20,6 +20,9 @@ model DomainWord {
   dns_in       String   @default("pending")
   whois_in     String   @default("pending")
 
+  org_rank     Int?
+  rank_status  String   @default("pending") // 'pending', 'done', 'error'
+
   last_checked DateTime @default(now())
   created_at   DateTime @default(now())
 }
