@@ -20,7 +20,26 @@ You only need to add these **4 to 5 secrets** to the normal GitHub account repos
 
 ---
 
-## 3. Instructions for Google AI Studio (Copy & Paste this to AI Studio)
+## 3. Handling the Database in AI Studio (Dev vs Production)
+
+Since exposing your VPS PostgreSQL database (port 5432) to the internet is a security risk, you should use a different database while coding inside Google AI Studio. 
+
+Because Prisma does not allow dynamic database providers (you cannot use a variable to switch between SQLite and PostgreSQL), you have two safe alternatives:
+
+### Alternative A: The SQLite Swap Method (Recommended for simple apps)
+Tell Google AI Studio to build your app using `sqlite` for local development. Then, your `Dockerfile` on the VPS will automatically swap it to `postgresql` right before deploying.
+* **In AI Studio (`.env`)**: `DATABASE_URL="file:./dev.db"`
+* **In AI Studio (`schema.prisma`)**: `provider = "sqlite"`
+* **In your `Dockerfile`**: Add a command to swap the provider during the production build (see the updated Dockerfile below).
+
+### Alternative B: Free Serverless Postgres (Recommended for complex apps)
+Since SQLite doesn't support some advanced PostgreSQL features (like Enums or JSONB), the easiest seamless method is to use a free remote Postgres database (like [Neon.tech](https://neon.tech) or [Supabase](https://supabase.com)) purely for development in AI Studio.
+* **In AI Studio (`.env`)**: `DATABASE_URL="postgres://user:pass@ep-cool-cloud-db.neon.tech/neondb"`
+* **In Production**: Your `docker-compose.yml` overrides the `DATABASE_URL` to use your secure, local `global_postgres` VPS database.
+
+---
+
+## 4. Instructions for Google AI Studio (Copy & Paste this to AI Studio)
 
 *You can paste the following prompt directly into Google AI Studio so it knows exactly how to structure your project:*
 
@@ -28,7 +47,7 @@ You only need to add these **4 to 5 secrets** to the normal GitHub account repos
 > "I want to deploy this Node.js/Prisma application to a VPS using Docker. Please create or update the following files in the repository:
 > 
 > **1. `Dockerfile`**
-> Create a Dockerfile that uses `node:18-alpine`. It must run `npm install`, generate the Prisma client (`npx prisma generate`), run the build step if required (`npm run build`), and expose port `3000`. The CMD should start the app (e.g., `npm start`).
+> Create a Dockerfile that uses `node:20-slim` (Debian-based) to avoid Prisma OpenSSL errors. It must run `npm install`, generate the Prisma client (`npx prisma generate`), run the build step if required (`npm run build`), and expose port `3000`. The CMD should start the app (e.g., `npm start`).
 > 
 > **2. `docker-compose.yml`**
 > Create a `docker-compose.yml` file with a single service.
@@ -47,13 +66,17 @@ You only need to add these **4 to 5 secrets** to the normal GitHub account repos
 If you prefer to create them yourself, here are the exact files that need to exist in your standalone repository:
 
 ### File 1: `Dockerfile`
-*(Where the NPM build happens)*
+*(Where the NPM build happens, including the SQLite -> Postgres swap)*
 ```dockerfile
-FROM node:18-alpine
+FROM node:20-slim
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# If you used SQLite in AI Studio, this line swaps it to PostgreSQL for production
+RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/g' prisma/schema.prisma
+
 # If you have a build script (like Next.js or TS), it happens here:
 # RUN npm run build
 RUN npx prisma generate
