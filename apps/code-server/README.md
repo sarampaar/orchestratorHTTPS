@@ -9,7 +9,7 @@ This directory contains the Dockerized environment and architectural configurati
 `code-server` runs inside a lightweight Docker container securely attached to the orchestrator's bridge network (`factory_net` / `orchestrator_factory_net`). It features a two-tiered security boundary:
 
 1. **Access Authorization**: Password-authenticated access (set dynamically during deployment) guarding the editor workspace.
-2. **Network Isolation**: By default, the port is bound to `127.0.0.1:8080`, rendering it unreachable via the host's public IP. All routing is negotiated securely through **Cloudflare Zero Trust Tunnels**, bypassing the need to open firewall ports or deal with local SSL termination.
+2. **Network Isolation**: By default, the port is bound to `127.0.0.1:8085` on the host, rendering it unreachable via the host's public IP. All routing is negotiated securely through **Cloudflare Zero Trust Tunnels**, bypassing the need to open firewall ports or deal with local SSL termination.
 
 ```mermaid
 flowchart LR
@@ -60,11 +60,11 @@ Since the `code-server` container and your main Cloudflare `tunnel` container sh
 ---
 
 ### Option B: Localhost Binding Route (Fallback 🔗)
-If your Cloudflare Tunnel is running outside of Docker (as a host-level systemd service) or you prefer using loopback routing, the container maps port `8080` to the host's localhost loopback.
+If your Cloudflare Tunnel is running outside of Docker (as a host-level systemd service) or you prefer using loopback routing, the container maps port `8080` internally to port `8085` on the host's localhost loopback.
 
 1. In the **Public Hostname** setup, set:
    - **Service Type**: `HTTP`
-   - **URL**: `localhost:8080` or `127.0.0.1:8080`
+   - **URL**: `localhost:8085` or `127.0.0.1:8085`
 2. Click **Save hostname**.
 
 ---

@@ -7,8 +7,8 @@ services:
     restart: unless-stopped
     ports:
       # Binds to the localhost interface of the host to prevent public exposure.
-      # You can route to this via Cloudflare Tunnel using 'http://localhost:8080'.
-      - "127.0.0.1:8080:8080"
+      # You can route to this via Cloudflare Tunnel using 'http://localhost:8085'.
+      - "127.0.0.1:8085:8080"
     volumes:
       # Persists workspaces and personal settings
       - ~/projects:/home/coder/projects

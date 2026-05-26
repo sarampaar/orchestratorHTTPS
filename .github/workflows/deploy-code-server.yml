@@ -43,7 +43,7 @@ jobs:
             set -e
 
             CONTAINER_NAME="code-server"
-            HOST_PORT=8080
+            HOST_PORT=8085
             IMAGE="codercom/code-server:latest"
             PROJECTS_DIR="$HOME/projects"
             CONFIG_DIR="$HOME/.config/code-server"
@@ -53,10 +53,11 @@ jobs:
             echo "       🌐 Deploying VS Code (code-server)       "
             echo "================================================="
 
-            # 1. Create required directories on the VPS
+            # 1. Create required directories on the VPS and set owner to UID 1000 (coder user)
             echo "[1/5] Ensuring projects and config directories exist..."
             mkdir -p "$PROJECTS_DIR"
             mkdir -p "$CONFIG_DIR"
+            chown -R 1000:1000 "$PROJECTS_DIR" "$CONFIG_DIR" 2>/dev/null || true
             echo "  📂 Projects: $PROJECTS_DIR"
             echo "  📂 Config:   $CONFIG_DIR"
 
