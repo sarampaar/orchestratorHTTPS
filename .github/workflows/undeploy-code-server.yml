@@ -1,0 +1,93 @@
+name: Undeploy code-server (Uninstall VS Code)
+
+on:
+  workflow_dispatch:
+    inputs:
+      delete_data:
+        description: 'Delete user projects and configuration? (set to true to delete ALL data permanently)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  undeploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          HOST="${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}"
+          KEY="${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}"
+          
+          if [ -z "$HOST" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_IP nor VPS_HOST secret is defined in this repository."
+            exit 1
+          fi
+          if [ -z "$KEY" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_SSH_KEY, GLOBAL_SSH_KEY, nor VPS_SSH_KEY secret is defined in this repository."
+            exit 1
+          fi
+          echo "✅ Pre-requisite secrets validated successfully."
+        shell: bash
+
+      - name: Uninstall code-server from VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.GLOBAL_VPS_PORT || secrets.VPS_PORT || 2256 }}
+          script: |
+            set -e
+
+            CONTAINER_NAME="code-server"
+            IMAGE="codercom/code-server:latest"
+            PROJECTS_DIR="$HOME/projects"
+            CONFIG_DIR="$HOME/.config/code-server"
+
+            echo "================================================="
+            echo "       🗑️ Uninstalling VS Code (code-server)    "
+            echo "================================================="
+
+            # 1. Stop and remove the container (Deletes the container completely)
+            echo "[1/3] Stopping and removing container '$CONTAINER_NAME'..."
+            if [ "$(docker ps -a -q -f name=^/${CONTAINER_NAME}$)" ]; then
+              docker stop $CONTAINER_NAME 2>/dev/null || true
+              docker rm   $CONTAINER_NAME 2>/dev/null || true
+              echo "✅ Container '$CONTAINER_NAME' has been stopped and deleted."
+            else
+              echo "ℹ️ Container '$CONTAINER_NAME' is not running or already deleted."
+            fi
+
+            # 2. Remove Docker image to free up space
+            echo "[2/3] Cleaning up Docker image ($IMAGE)..."
+            docker rmi $IMAGE 2>/dev/null || true
+            echo "✅ Image cleaned."
+
+            # 3. Handle data cleanup
+            if [ "${{ github.event.inputs.delete_data }}" = "true" ]; then
+              echo "[3/3] ⚠️ CRITICAL: Deleting persistent data directories as requested..."
+              
+              if [ -d "$CONFIG_DIR" ]; then
+                rm -rf "$CONFIG_DIR"
+                echo "  🗑️ Deleted configurations: $CONFIG_DIR"
+              fi
+              
+              if [ -d "$PROJECTS_DIR" ]; then
+                rm -rf "$PROJECTS_DIR"
+                echo "  🗑️ Deleted projects directory: $PROJECTS_DIR"
+              fi
+              echo "✅ All editor configuration and user projects deleted permanently."
+            else
+              echo "[3/3] Keeping persistent directories (Only container and image were deleted)."
+              echo "  📂 Preserved Projects: $PROJECTS_DIR"
+              echo "  📂 Preserved Config:   $CONFIG_DIR"
+            fi
+
+            echo ""
+            echo "================================================="
+            echo "🎉 VS Code (code-server) uninstallation complete!"
+            echo "================================================="

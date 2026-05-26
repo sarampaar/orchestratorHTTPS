@@ -76,3 +76,45 @@ If your Cloudflare Tunnel is running outside of Docker (as a host-level systemd 
 
 > [!TIP]
 > **Performance Tip**: Since files are stored natively on the VPS, terminal actions and git workflows inside `code-server` run at bare-metal speeds with immediate feedback!
+
+---
+
+## 🗑️ How to Uninstall (Undeploy)
+
+If you ever wish to uninstall `code-server` from your VPS, you can do so either via GitHub Actions or directly on your VPS.
+
+### Will uninstallation delete the container?
+**Yes!** Both uninstallation options will completely stop and delete the `code-server` Docker container, remove the container system records, and clean up the cached Docker image from your VPS disk. 
+
+You can decide whether to **keep or delete your code and settings**:
+- **Option A (Keep Data - Default)**: Removes the container and image but preserves your editor configurations (`~/.config/code-server`) and your source code projects (`~/projects`).
+- **Option B (Purge Everything)**: Deletes the container, the image, and permanently purges your projects and settings folders from the VPS host.
+
+---
+
+### Method 1: One-Click Uninstall (via GitHub Actions ☁️)
+
+1. Navigate to the **Actions** tab in this GitHub repository.
+2. Select **Undeploy code-server (Uninstall VS Code)** from the list of workflows.
+3. Click **Run workflow**.
+4. Set the **Delete user projects and configuration?** checkmark:
+   - Leave it **unchecked** (default) to remove the container while keeping your projects safe on the VPS.
+   - **Check** it if you want to wipe out the container and delete all user projects permanently.
+5. Click **Run workflow**.
+
+---
+
+### Method 2: Command Line Uninstall (via VPS Terminal 💻)
+
+If you are already logged in to your VPS terminal, you can run the provided interactive script inside the `apps/code-server` directory:
+
+```bash
+# 1. Navigate to the code-server directory
+cd ~/orchestrator/apps/code-server
+
+# 2. Grant executable permissions and run the script
+chmod +x uninstall.sh
+./uninstall.sh
+```
+The script will stop and delete the container, clean up the image, and prompt you interactively to choose whether to delete your files or keep them.
+
