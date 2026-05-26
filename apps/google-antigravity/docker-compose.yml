@@ -8,8 +8,8 @@ services:
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     networks:
-      - factory_net
+      - orchestrator_factory_net
 
 networks:
-  factory_net:
+  orchestrator_factory_net:
     external: true
