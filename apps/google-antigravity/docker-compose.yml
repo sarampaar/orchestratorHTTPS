@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  google-antigravity:
+    container_name: google_antigravity
+    build: .
+    restart: always
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - factory_net
+
+networks:
+  factory_net:
+    external: true

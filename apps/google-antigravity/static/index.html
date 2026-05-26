@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Antigravity Agent Control Center</title>
+    <!-- Outfit Font for UI, JetBrains Mono for Terminal -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Premium Glassmorphic Effects */
+        .glass-panel {
+            background: rgba(13, 14, 22, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        body {
+            background-color: #08090d;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(263, 60%, 15%, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(280, 40%, 10%, 0.1) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        /* Custom scrollbar for chat and logs */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-violet-500/30 selection:text-violet-200">
+
+    <!-- Glowing Top Header -->
+    <header class="w-full max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                <span class="text-xl font-bold tracking-tighter text-white">G</span>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-violet-200 to-indigo-300">
+                    ANTIGRAVITY
+                </h1>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400/80 font-semibold">Autonomous Agent Console</p>
+            </div>
+        </div>
+        
+        <!-- Status Indicator -->
+        <div id="status-banner" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold glass-card border border-violet-500/20 text-violet-300">
+            <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+            <span id="status-text">Checking credentials...</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="w-full max-w-7xl mx-auto px-6 py-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Left Side: Interactive Agent Chat (8 Columns) -->
+        <section class="lg:col-span-7 flex flex-col justify-between rounded-2xl glass-panel p-5 relative overflow-hidden group">
+            <!-- Decorative light pool -->
+            <div class="absolute -top-40 -left-40 w-80 h-80 bg-violet-600/10 rounded-full blur-[100px] pointer-events-none transition-all duration-700 group-hover:bg-violet-600/15"></div>
+            
+            <div class="z-10 flex flex-col h-[65vh] justify-between">
+                <!-- Chat Panel Top Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-200">Agent Chat Feed</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-white/5 text-slate-400">v1.0.0</span>
+                    </div>
+                    <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1">
+                        🧹 Clear Thread
+                    </button>
+                </div>
+
+                <!-- Chat Message Feed -->
+                <div id="chat-feed" class="flex-grow overflow-y-auto space-y-4 pr-1 mb-4">
+                    <!-- Default Agent Welcome Message -->
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shrink-0">
+                            <span class="text-xs font-bold text-white">A</span>
+                        </div>
+                        <div class="glass-card rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm leading-relaxed border border-white/5 text-slate-300">
+                            <p>Greetings! I am the **Google Antigravity Autonomous Agent** linked directly to this container environment.</p>
+                            <p class="mt-2">I have access to file read/write, bash terminal execution, and contextual AI search. What operation shall we coordinate today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggested Actions -->
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <button onclick="sendSuggested('status')" class="text-xs px-3 py-1.5 rounded-lg glass-card hover:bg-white/5 border border-white/5 transition-all text-slate-300 hover:border-violet-500/30">
+                        ⚡ Check System Health
+                    </button>
+                    <button onclick="sendSuggested('list files')" class="text-xs px-3 py-1.5 rounded-lg glass-card hover:bg-white/5 border border-white/5 transition-all text-slate-300 hover:border-violet-500/30">
+                        📂 List Workspace Files
+                    </button>
+                    <button onclick="sendSuggested('help')" class="text-xs px-3 py-1.5 rounded-lg glass-card hover:bg-white/5 border border-white/5 transition-all text-slate-300 hover:border-violet-500/30">
+                        ❓ Show Agent Core Skills
+                    </button>
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" onsubmit="sendMessage(event)" class="flex gap-2">
+                    <input id="user-input" type="text" autocomplete="off" placeholder="Instruct the agent (e.g., 'Check health')..." 
+                           class="flex-grow bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-500/50 transition-colors placeholder:text-slate-500 text-slate-200">
+                    <button type="submit" class="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl px-6 py-3 font-semibold text-sm transition-all shadow-md shadow-violet-600/10">
+                        Instruct
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right Side: Retro Agent Terminal Logs (5 Columns) -->
+        <section class="lg:col-span-5 flex flex-col justify-between rounded-2xl glass-panel p-5 relative overflow-hidden group">
+            <!-- Decorative light pool -->
+            <div class="absolute -top-40 -right-40 w-80 h-80 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none transition-all duration-700 group-hover:bg-indigo-600/15"></div>
+
+            <div class="z-10 flex flex-col h-[65vh] justify-between">
+                <!-- Terminal Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="flex gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500/70"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/70"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500/70"></span>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-slate-400 ml-2">antigravity-agent@vps:~</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-indigo-400 font-bold uppercase tracking-wider">Live Trace Logs</span>
+                </div>
+
+                <!-- Terminal Logger Area -->
+                <div id="terminal-feed" class="flex-grow overflow-y-auto font-mono text-xs text-slate-300 space-y-2 pr-1 mb-4 bg-black/40 border border-white/5 rounded-xl p-4 min-h-[150px]">
+                    <div class="text-slate-500">// Terminal trace logs will appear here during agent execution...</div>
+                    <div class="text-indigo-400/80">&gt; Antigravity Agent runtime environment online.</div>
+                </div>
+
+                <!-- Configuration Info Panel -->
+                <div class="glass-card border border-white/5 rounded-xl p-4 text-xs text-slate-400 leading-relaxed">
+                    <div class="flex items-center gap-1.5 font-semibold text-slate-200 mb-1">
+                        🔑 <span class="uppercase tracking-wider text-[10px] text-slate-300">Model Deployment Credentials</span>
+                    </div>
+                    <p>To operate full-scale agent workflows, ensure your <code class="bg-white/5 px-1 py-0.5 rounded text-violet-300 font-mono text-[11px]">GEMINI_API_KEY</code> is supplied inside your VPS docker-compose environment variables.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-7xl mx-auto px-6 pb-6 text-center text-xs text-slate-500/80 z-10 flex flex-col md:flex-row justify-between items-center gap-2">
+        <p>© 2026 Google Antigravity SDK Integration Project</p>
+        <p class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px]">Cloudflare Tunneled</span>
+            <span>·</span>
+            <span class="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px]">Dockerized</span>
+        </p>
+    </footer>
+
+    <!-- Frontend Core Scripts -->
+    <script>
+        let sessionId = null;
+
+        // Automatically fetch session info and adjust banners on mount
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Make a quick mock request to identify API status
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "status" })
+                });
+                const data = await response.json();
+                sessionId = data.session_id;
+                
+                const banner = document.getElementById('status-banner');
+                const bannerText = document.getElementById('status-text');
+                
+                if (data.simulated) {
+                    banner.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold glass-card border border-amber-500/20 text-amber-300";
+                    banner.querySelector('span').className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+                    bannerText.textContent = "Simulation Sandbox mode";
+                } else {
+                    banner.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold glass-card border border-emerald-500/20 text-emerald-300";
+                    banner.querySelector('span').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                    bannerText.textContent = "Live Google Agent Active";
+                }
+            } catch (err) {
+                console.error("Failed to fetch initial status: ", err);
+                document.getElementById('status-text').textContent = "Offline Sandbox mode";
+            }
+        });
+
+        // Trigger suggested button chats
+        function sendSuggested(cmdText) {
+            document.getElementById('user-input').value = cmdText;
+            document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+        }
+
+        // Clear local chat UI
+        function clearChat() {
+            document.getElementById('chat-feed').innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-white">A</span>
+                    </div>
+                    <div class="glass-card rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm leading-relaxed border border-white/5 text-slate-300">
+                        <p>Thread restarted. What system operations should we plan next?</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('terminal-feed').innerHTML = `<div class="text-slate-500">// Console logging cleared. Ready.</div>`;
+        }
+
+        // Send chat messages to API
+        async function sendMessage(event) {
+            event.preventDefault();
+            const inputField = document.getElementById('user-input');
+            const userMsg = inputField.value.trim();
+            if (!userMsg) return;
+
+            // Clear input and display user message in feed
+            inputField.value = '';
+            appendMessage('user', userMsg);
+
+            // Create temporary loader message
+            const loaderId = appendMessage('loader', '');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMsg, session_id: sessionId })
+                });
+                
+                if (!response.ok) throw new Error("HTTP connection failed");
+                const data = await response.json();
+                
+                // Remove loading bubble
+                document.getElementById(loaderId).remove();
+                
+                // Append agent's final text answer
+                appendMessage('agent', data.response);
+                
+                // Parse and stream actions list to the terminal panel
+                streamActionsToTerminal(data.actions);
+                
+            } catch (err) {
+                document.getElementById(loaderId).remove();
+                appendMessage('agent', "❌ **System Error**: I failed to reach the local API server. Please verify the Docker container logs on your VPS.");
+            }
+        }
+
+        // Helper to append chat blocks
+        function appendMessage(sender, text) {
+            const feed = document.getElementById('chat-feed');
+            const id = 'msg-' + Math.random().toString(36).substr(2, 9);
+            const container = document.createElement('div');
+            container.id = id;
+            container.className = "flex items-start gap-3 opacity-0 translate-y-3 transition-all duration-300";
+
+            if (sender === 'user') {
+                container.innerHTML = `
+                    <div class="flex items-start gap-3 w-full justify-end">
+                        <div class="bg-violet-600/10 rounded-2xl rounded-tr-none p-4 max-w-[85%] text-sm leading-relaxed border border-violet-500/20 text-slate-200">
+                            <p>${escapeHTML(text)}</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 border border-white/10">
+                            <span class="text-xs font-bold text-slate-300">U</span>
+                        </div>
+                    </div>
+                `;
+            } else if (sender === 'agent') {
+                // Parse simple markdown block representation
+                const parsedText = formatMarkdown(text);
+                container.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-white">A</span>
+                    </div>
+                    <div class="glass-card rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm leading-relaxed border border-white/5 text-slate-300">
+                        ${parsedText}
+                    </div>
+                `;
+            } else if (sender === 'loader') {
+                container.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-white">A</span>
+                    </div>
+                    <div class="glass-card rounded-2xl rounded-tl-none p-4 w-20 flex justify-center items-center gap-1 border border-white/5 py-3">
+                        <span class="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></span>
+                        <span class="w-2 h-2 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]"></span>
+                        <span class="w-2 h-2 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]"></span>
+                    </div>
+                `;
+            }
+
+            feed.appendChild(container);
+            
+            // Animation trigger
+            setTimeout(() => {
+                container.classList.remove('opacity-0', 'translate-y-3');
+            }, 50);
+
+            feed.scrollTop = feed.scrollHeight;
+            return id;
+        }
+
+        // Animate actions list into terminal trace logger
+        async function streamActionsToTerminal(actions) {
+            const term = document.getElementById('terminal-feed');
+            term.innerHTML = `<div class="text-slate-500">// Initiating action execution trace...</div>`;
+            
+            for (const action of actions) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                const logItem = document.createElement('div');
+                logItem.className = "opacity-0 transition-opacity duration-300";
+                
+                if (action.type === 'tool_call') {
+                    logItem.className += " text-yellow-300 font-semibold";
+                    logItem.textContent = `> ${action.message}`;
+                } else if (action.type === 'tool_response') {
+                    logItem.className += " text-slate-400 pl-4";
+                    logItem.textContent = action.message;
+                } else if (action.type === 'success') {
+                    logItem.className += " text-emerald-400 font-bold";
+                    logItem.textContent = `> ${action.message}`;
+                } else if (action.type === 'warning') {
+                    logItem.className += " text-amber-400";
+                    logItem.textContent = `> ${action.message}`;
+                } else {
+                    logItem.className += " text-indigo-300/80";
+                    logItem.textContent = `> ${action.message}`;
+                }
+                
+                term.appendChild(logItem);
+                setTimeout(() => { logItem.classList.remove('opacity-0'); }, 50);
+                term.scrollTop = term.scrollHeight;
+            }
+        }
+
+        // Quick escape
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // Basic Markdown parser for codeblocks and lists
+        function formatMarkdown(text) {
+            let html = text;
+            
+            // Escape original HTML first
+            html = escapeHTML(html);
+
+            // Handle code blocks ```code```
+            html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-black/60 font-mono text-xs text-emerald-400 p-3 rounded-lg border border-white/5 my-2 overflow-x-auto select-all">$1</pre>');
+            
+            // Handle inline code `code`
+            html = html.replace(/`([^`]+)`/g, '<code class="bg-white/5 font-mono text-violet-300 px-1 py-0.5 rounded text-[12px]">$1</code>');
+            
+            // Handle bold **text**
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+            
+            // Handle unordered list lines (e.g. - list item)
+            html = html.replace(/^\-\s(.*)$/gm, '• $1');
+            
+            // Newlines to breaks
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+    </script>
+</body>
+</html>

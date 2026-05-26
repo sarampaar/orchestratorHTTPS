@@ -1,0 +1,110 @@
+name: Deploy Google Antigravity Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      gemini_api_key:
+        description: 'Gemini API Key (leave blank to use repo secret)'
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          HOST="${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}"
+          KEY="${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}"
+          
+          if [ -z "$HOST" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_IP nor VPS_HOST secret is defined in this repository."
+            exit 1
+          fi
+          if [ -z "$KEY" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_SSH_KEY, GLOBAL_SSH_KEY, nor VPS_SSH_KEY secret is defined in this repository."
+            exit 1
+          fi
+          echo "✅ Pre-requisite secrets validated successfully."
+        shell: bash
+
+      - name: Prep Agent Directory on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.GLOBAL_VPS_PORT || secrets.VPS_PORT || 2256 }}
+          script: |
+            mkdir -p ~/orchestrator/apps/google-antigravity
+
+      - name: Sync Agent Code to VPS
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.GLOBAL_VPS_PORT || secrets.VPS_PORT || 2256 }}
+          source: "apps/google-antigravity"
+          target: "~/orchestrator"
+
+      - name: Build and Start Container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.GLOBAL_VPS_PORT || secrets.VPS_PORT || 2256 }}
+          script: |
+            set -e
+
+            CONTAINER_NAME="google_antigravity"
+            APP_DIR="~/orchestrator/apps/google-antigravity"
+
+            echo "================================================="
+            echo "     🚀 Deploying Google Antigravity Agent      "
+            echo "================================================="
+
+            # Resolve API Key
+            # Priority: 1. Manual workflow input, 2. GitHub secrets, 3. Empty (Simulation mode fallback)
+            API_KEY="${{ github.event.inputs.gemini_api_key || secrets.GEMINI_API_KEY || secrets.GOOGLE_API_KEY }}"
+
+            cd $APP_DIR
+
+            # Build and boot container
+            echo "[1/2] Building and spinning up container..."
+            export GEMINI_API_KEY="$API_KEY"
+            docker compose up -d --build --force-recreate
+
+            # Wait for startup
+            echo "⏳ Waiting for server to initialize..."
+            sleep 5
+
+            # Verify container health
+            STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME 2>/dev/null || echo "not found")
+            if [ "$STATUS" = "running" ]; then
+              echo ""
+              echo "✅ Google Antigravity Agent app is running successfully!"
+              echo "   Container : $CONTAINER_NAME"
+              echo "   Internal  : http://$CONTAINER_NAME:8000"
+              if [ -z "$API_KEY" ]; then
+                echo "   ⚠️ Mode: Simulation Sandbox (No API key provided)"
+              else
+                echo "   🔥 Mode: Active Autonomous AI Agent (API key connected)"
+              fi
+              echo ""
+              echo "🛡️ Cloudflare Routing:"
+              echo "   In Cloudflare Zero Trust Tunnels, route your subdomain to:"
+              echo "   Service Type : HTTP"
+              echo "   URL          : http://$CONTAINER_NAME:8000"
+              echo ""
+            else
+              echo "❌ ERROR: Container failed to start. Status: $STATUS"
+              echo "--- Container Logs ---"
+              docker logs $CONTAINER_NAME 2>/dev/null || true
+              exit 1
+            fi
