@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  code-server:
+    container_name: code-server
+    image: codercom/code-server:latest
+    restart: unless-stopped
+    ports:
+      # Binds to the localhost interface of the host to prevent public exposure.
+      # You can route to this via Cloudflare Tunnel using 'http://localhost:8080'.
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Persists workspaces and personal settings
+      - ~/projects:/home/coder/projects
+      - ~/.config/code-server:/home/coder/.config/code-server
+    environment:
+      - PASSWORD=${CODE_SERVER_PASSWORD:-securepassword123}
+      - DOCKER_USER=root
+    networks:
+      - factory_net
+    command: --bind-addr 0.0.0.0:8080 --auth password /home/coder/projects
+
+networks:
+  factory_net:
+    external: true

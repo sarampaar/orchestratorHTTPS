@@ -1,0 +1,121 @@
+name: Deploy code-server (VS Code in Browser)
+
+on:
+  workflow_dispatch:
+    inputs:
+      password:
+        description: 'VS Code password (min 8 chars)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          HOST="${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}"
+          KEY="${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}"
+          
+          if [ -z "$HOST" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_IP nor VPS_HOST secret is defined in this repository."
+            exit 1
+          fi
+          if [ -z "$KEY" ]; then
+            echo "❌ ERROR: Neither GLOBAL_VPS_SSH_KEY, GLOBAL_SSH_KEY, nor VPS_SSH_KEY secret is defined in this repository."
+            exit 1
+          fi
+          echo "✅ Pre-requisite secrets validated successfully."
+        shell: bash
+
+      - name: Deploy code-server on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GLOBAL_VPS_IP || secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.GLOBAL_VPS_SSH_KEY || secrets.GLOBAL_SSH_KEY || secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.GLOBAL_VPS_PORT || secrets.VPS_PORT || 2256 }}
+          script: |
+            set -e
+
+            CONTAINER_NAME="code-server"
+            HOST_PORT=8080
+            IMAGE="codercom/code-server:latest"
+            PROJECTS_DIR="$HOME/projects"
+            CONFIG_DIR="$HOME/.config/code-server"
+            NETWORK_NAME="orchestrator_factory_net"
+
+            echo "================================================="
+            echo "       🌐 Deploying VS Code (code-server)       "
+            echo "================================================="
+
+            # 1. Create required directories on the VPS
+            echo "[1/5] Ensuring projects and config directories exist..."
+            mkdir -p "$PROJECTS_DIR"
+            mkdir -p "$CONFIG_DIR"
+            echo "  📂 Projects: $PROJECTS_DIR"
+            echo "  📂 Config:   $CONFIG_DIR"
+
+            # 2. Ensure docker bridge network exists
+            echo "[2/5] Checking Docker orchestrator network ($NETWORK_NAME)..."
+            docker network create $NETWORK_NAME || true
+
+            # 3. Pull latest image
+            echo "[3/5] Pulling latest code-server image..."
+            docker pull $IMAGE
+
+            # 4. Clean up old container if running
+            echo "[4/5] Stopping and removing existing code-server container (if any)..."
+            docker stop $CONTAINER_NAME 2>/dev/null || true
+            docker rm   $CONTAINER_NAME 2>/dev/null || true
+
+            # 5. Run new container
+            echo "[5/5] Launching code-server container..."
+            docker run -d \
+              --name $CONTAINER_NAME \
+              --restart unless-stopped \
+              --network $NETWORK_NAME \
+              -p 127.0.0.1:${HOST_PORT}:8080 \
+              -v "$PROJECTS_DIR:/home/coder/projects" \
+              -v "$CONFIG_DIR:/home/coder/.config/code-server" \
+              -e PASSWORD="${{ github.event.inputs.password }}" \
+              -e DOCKER_USER=root \
+              $IMAGE \
+              --bind-addr 0.0.0.0:8080 \
+              --auth password \
+              /home/coder/projects
+
+            # Wait for container initialization
+            echo "⏳ Waiting for code-server to initialize..."
+            sleep 5
+
+            # Verify container status
+            STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME 2>/dev/null || echo "not found")
+            if [ "$STATUS" = "running" ]; then
+              echo ""
+              echo "✅ VS Code in Browser (code-server) is running successfully!"
+              echo "   Container  : $CONTAINER_NAME"
+              echo "   Docker Net : $NETWORK_NAME"
+              echo "   Local Bind : 127.0.0.1:${HOST_PORT}"
+              echo ""
+              echo "🛡️ Cloudflare Routing (Option A - Highly Secure, No Exposed Ports):"
+              echo "   In Cloudflare Zero Trust Tunnels, add a public hostname and point it directly to:"
+              echo "   Service Type : HTTP"
+              echo "   URL          : http://$CONTAINER_NAME:8080"
+              echo "   (This works because the central Cloudflare Tunnel container shares '$NETWORK_NAME')"
+              echo ""
+              echo "🔗 Cloudflare Routing (Option B - Classic Host localhost):"
+              echo "   Point your tunnel hostname to:"
+              echo "   Service Type : HTTP"
+              echo "   URL          : http://localhost:${HOST_PORT}"
+              echo ""
+            else
+              echo "❌ ERROR: Container failed to start. Status: $STATUS"
+              echo "--- Container Logs ---"
+              docker logs $CONTAINER_NAME 2>/dev/null || true
+              exit 1
+            fi
